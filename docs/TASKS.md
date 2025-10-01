@@ -108,85 +108,157 @@ As an organizer, I want to generate a Big Toss cycle of Games from the current p
 - **Developer note**: When changing the saved data format in future development, update STORAGE_VERSION in `src/utils/localStorage.ts`
 
 ### US-005 Compose Games (team building)
-As an organizer, I want each Game to have two teams of 3 players with a flexible "Bonus Slot" system for roster changes.
+As an organizer, I want each Game to have two teams of 3 players with a flexible Reserved/Bonus Slot system so roster changes can be handled fairly during a Big Toss.
 
 - Acceptance Criteria
-  - Each scheduled Game has exactly 6 unique players
-  - Teams are balanced by minimizing repeats and distributing players fairly
-  - **Bonus Slot System**: Games can contain mix of regular slots (protected core) and bonus slots (fillable)
-  - **Roster Change Impact**: Only Games with bonus slots are eligible for automatic recalculation when players are added/removed
-  - **Protected Games**: Games with no bonus slots remain unchanged unless an assigned player is removed
-  - **New Player Assignment**: New players are assigned to earliest games containing bonus slots first
-  - **Automatic Conflict Resolution**: When players are removed, automatically resolve with minimal disruption
-  - Store teams as: { teamA: [{ playerId, isBonus: boolean } x3], teamB: [{ playerId, isBonus: boolean } x3] }
+  - Core game composition
+    - Each scheduled Game has exactly 6 unique player slots divided into two teams of 3
+    - No player may occupy more than one slot in the same Game
+    - Teams are initially balanced by minimizing repeated pairings within the Big Toss
+  - Slot types and semantics
+    - Each player has at most one Reserved Slot per Big Toss (ensures they play at least one Game in that Big Toss)
+    - A "Bonus Slot" is a slot occupied by a player who already has a Reserved Slot (or had already played in the Big Toss)
+    - A Game can contain any mix of Reserved and Bonus slots
+    - If a Game ends up containing only Bonus slots, that Game is deleted immediately (not only on add/remove events)
+  - Generation from player list (unlimited size)
+    - Initial generation from N players: create ceil(N/6) Games so each player gets exactly one Reserved slot in that Big Toss
+    - With exactly 6 players: create a single Game with 6 Reserved slots
+    - If the last Game has fewer than 6 players after assigning all Reserved slots, fill its remaining slots as Bonus slots selected from existing players according to fairness rules
+    - When players are added beyond multiples of 6 during a running Big Toss, create additional Games as needed so each newly added player receives one Reserved Slot in the current Big Toss
+  - Fairness for Bonus slot attribution and displacement
+    - Preference for occupying Bonus slots goes to players with the fewest session Bonus slots used
+    - Tie-breakers: fewest games in current Big Toss, earliest lastPlayedAt, then alphabetical by name
+    - If multiple candidates have no lastPlayedAt, use joinedAt, then alphabetical by name
+    - When a new player is added and must take over a Bonus slot, select the Bonus occupant with the highest session Bonus slot count (reverse of the above priority) with the same tie-breakers, preferring the earliest game that has Bonus slots
+  - Handling adds during a running Big Toss
+    - Adding the 7th player (from 6) creates a second Game where the new player takes a Reserved Slot and five other players fill Bonus slots
+    - Adding players up to 12 creates or populates Games so each new player gets exactly one Reserved Slot in the current Big Toss
+  - Handling removals during a running Big Toss
+    - If a player in a Reserved Slot is removed and another Game exists that contains only Bonus slots, move a Reserved player from the later Game into the vacancy to minimize the number of Games; if the moved player had their only Reserved Slot in that later Game and no Reserved slots remain there, delete that later Game (games containing only Bonus slots are deleted immediately)
+    - If a player in a Reserved Slot is removed and no later game contains only Bonus slots, keep the number of Games unchanged and directly select a fair replacement to fill that Reserved slot (Option B). The replacement is chosen using the Bonus fairness priority, restricted to eligible players not currently in the same Game.
+    - If a removed player was in a Bonus slot, simply re-run Bonus filling on the affected Game while keeping Reserved slots unchanged
+  - Persistence and integrity
+    - Slot type (Reserved/Bonus) must be stored per slot for auditability
+    - Prevent duplicates within the same Game
+    - Persist changes immediately to storage and maintain deterministic behavior under rapid add/remove operations
+    - When multiple adds/removes occur nearly simultaneously, process them sequentially in a deterministic order: by event timestamp, then by player name
 - Implementation Notes
-  - Use round-robin or snake draft from shuffled roster with constraints to minimize repeated pairings within the Big Toss
-  - **Bonus Slot Logic**: 
-    - Create core 6 players when possible, flag missing slots as bonus slots
-    - Players in bonus slots selected using fairness priority (fewest filled games → fewest games in current Big Toss → earliest last played)
-    - No limit on bonus slots per game - unlimited as needed for fairness
-    - Players can occupy multiple bonus slots per Big Toss if fairness requires
-  - **Automatic Resolution**:
-    - Removed player in regular slot: Auto-replace with bonus slot player from elsewhere (swap), or promote bench player to new bonus slot
-    - Removed player in bonus slot: Re-run bonus filling logic, keep other slots unchanged
-    - No manual confirmation needed - prefer automatic fixes
-  - **Fairness Tracking**: Bonus slots count toward "Filled Games" stats (separate from regular games)
-  - **Data Model**: Extend Game.teams to include slot metadata, keep Game.isToFill for UI visibility
-  - **UI Indicators**: Visual distinction between bonus vs regular slots, show "protected" status for games without bonus slots
-- **Detailed Implementation Requirements**:
-  - **Data Structure Changes**:
-    - Update `Game.teams` from `{ teamA: [playerId x3], teamB: [playerId x3] }` to `{ teamA: [{ playerId, isBonus: boolean } x3], teamB: [{ playerId, isBonus: boolean } x3] }`
-    - Each slot now has: `{ playerId: string, isBonus: boolean }`
-    - Keep `Game.isToFill` boolean for UI display purposes
-    - Update localStorage version if structure changes
-  - **Initial Game Generation**:
-    - When creating games from 6+ players: all slots are regular slots (`isBonus: false`)
-    - When creating games from <6 players: missing slots are bonus slots (`isBonus: true`)
-    - When creating games from >6 players: extra players beyond 6 are assigned to bonus slots in existing games
-  - **Player Addition Logic**:
-    - Find earliest game with at least one bonus slot
-    - Replace bonus slot player with new player
-    - If no bonus slots exist, create new "to-fill" game with all slots as bonus slots
-    - Re-run fairness algorithm to assign players to bonus slots
-  - **Player Removal Logic**:
-    - **If removed player is in regular slot**:
-      - Find a player in a bonus slot from any other game
-      - Swap them (regular slot player moves to bonus slot, bonus slot player moves to regular slot)
-      - If no bonus slot players exist, promote a bench player to new bonus slot in that game
-      - If no bench players, mark game as "to-fill" and require manual resolution
-    - **If removed player is in bonus slot**:
-      - Re-run bonus slot filling algorithm for that game only
-      - Keep all regular slots unchanged
-      - Assign new player to bonus slot using fairness priority
-  - **Fairness Algorithm for Bonus Slots**:
-    - Priority order: `sessionFilledGamesPlayed` (ascending) → `bigTossGamesPlayed` (ascending) → `lastPlayedAt` (ascending) → `name` (ascending)
-    - Players can occupy multiple bonus slots per Big Toss if needed
-    - Each bonus slot participation increments `sessionFilledGamesPlayed` counter
-  - **UI/UX Requirements**:
-    - **GameCard Component**: Show visual distinction between regular and bonus slots
-    - **Regular slots**: Normal styling, show "Protected" badge
-    - **Bonus slots**: Different background color, show "Fillable" badge
-    - **Game status**: Show "Protected" if no bonus slots, "Fillable" if has bonus slots
-    - **Player list**: Show which players are in bonus slots vs regular slots
-  - **State Management**:
-    - Update `generateGames()` function to create bonus slots when needed
-    - Update `assignRefsToGames()` to skip ref assignment for now (handled in US-006)
-    - Add `updateGameSlots()` function for roster change handling
-    - Add `findEarliestGameWithBonusSlots()` helper function
-    - Add `swapPlayersBetweenSlots()` helper function
-  - **Edge Cases**:
-    - **All players removed**: Mark all games as "to-fill"
-    - **Only 1 player left**: Create single-player game with 5 bonus slots
-    - **Duplicate player assignment**: Prevent same player in multiple slots of same game
-    - **Concurrent changes**: Handle multiple roster changes atomically
-  - **Testing Scenarios**:
-    - Add player to game with bonus slots
-    - Add player when no bonus slots exist
-    - Remove player from regular slot
-    - Remove player from bonus slot
-    - Remove all players from a game
-    - Add multiple players simultaneously
-    - Remove multiple players simultaneously
+  - Data model for teams in a `Game` should include slot metadata:
+    - teams: { teamA: [{ playerId, slotType: 'reserved'|'bonus' } x3], teamB: [{ playerId, slotType: 'reserved'|'bonus' } x3] }
+  - Introduce helpers:
+    - generateGames(initialPlayers)
+    - addPlayerToBigToss(newPlayer)
+    - removePlayerFromBigToss(playerId)
+    - fillBonusSlotsForGame(game)
+    - findGameWithOnlyBonusSlots()
+    - chooseBonusOccupantsByFairness()
+  - Example lineups shown in scenarios are illustrative only; actual allocations may differ while meeting fairness and constraints
+  - Session-scope counters: session Bonus slot counts reset when a new Session starts and accumulate across all Big Tosses within the Session
+
+#### Gherkin scenarios for US-005
+
+```gherkin
+Feature: US-005 Compose Games (team building)
+  As an organizer
+  I want two teams of 3 players per Game with Reserved and Bonus slots
+  So that roster changes during a Big Toss are handled fairly and consistently
+
+  Background:
+    Given an active Session with an empty Big Toss
+    And the fairness priority for Bonus slots is: fewest session bonus slots, then fewest games in current Big Toss, then earliest lastPlayedAt, then name
+
+  # case 1
+  Scenario: Exactly 6 players create a single game of 3v3 with all Reserved slots
+    Given the player list is [A, B, C, D, E, F]
+    When I generate the Big Toss
+    Then there is exactly 1 game in the Big Toss
+    And game 1 has two teams of 3 players each
+    And all 6 slots in game 1 are Reserved
+    And the players in game 1 are a permutation of [A, B, C, D, E, F]
+
+  # case 2 - Adding 7th player creates second game with new player's Reserved slot
+  Scenario: Adding G to 6 players creates a second game with G Reserved and others Bonus
+    Given the player list is [A, B, C, D, E, F]
+    And I have generated the Big Toss
+    When I add player G
+    Then there are exactly 2 games in the Big Toss
+    And in game 1, all 6 slots remain Reserved
+    And in game 2, player G occupies a Reserved slot
+    And the remaining 5 slots in game 2 are Bonus slots occupied by players from [A, B, C, D, E, F]
+    And no player appears twice within the same game
+    And an example valid allocation for game 2 is teamA [G, A, B] and teamB [C, D, E]
+
+  # case: 10 players at once -> ceil(10/6) = 2 games; second game has 4 Reserved, 2 Bonus
+  Scenario: Exactly 10 players create two games; leftover slots in game 2 are Bonus
+    Given the player list is [A, B, C, D, E, F, G, H, I, J]
+    When I generate the Big Toss
+    Then there are exactly 2 games in the Big Toss
+    And in game 1, all 6 slots are Reserved
+    And in game 2, exactly 4 slots are Reserved and 2 slots are Bonus
+    And Reserved slots in game 2 are assigned to players [G, H, I, J] (permutation allowed)
+    And Bonus slots in game 2 are chosen by fairness from among [A, B, C, D, E, F]
+
+  # case 2 - Removing C after adding G consolidates G into game 1 and deletes game 2
+  Scenario: Removing a Reserved player consolidates a later game with only Bonus slots
+    Given the player list is [A, B, C, D, E, F]
+    And I have generated the Big Toss
+    And I add player G
+    And there are 2 games with G Reserved in game 2 and all other game 2 slots Bonus
+    When I remove player C
+    Then game 1 now includes G occupying the vacated slot as Reserved
+    And game 2 has only Bonus slots remaining
+    And game 2 is deleted
+    And there is exactly 1 game in the Big Toss
+    And the players remaining are [A, B, D, E, F, G]
+
+  # From 6 players (after removal) add two players H and I
+  Scenario: Adding H and I creates a second game with both Reserved and others Bonus
+    Given the player list is [A, B, D, E, F, G]
+    And I have generated the Big Toss so there is exactly 1 game
+    When I add players H, I
+    Then there are exactly 2 games in the Big Toss
+    And in game 2, players H and I each occupy a Reserved slot
+    And the remaining 4 slots in game 2 are Bonus slots from among [A, B, D, E, F, G]
+    And no player appears twice within the same game
+    And an example valid allocation for game 2 is teamA [H, I, A] and teamB [B, C, D] if C exists, otherwise choose by fairness
+
+  # From 8 players add J; J takes over a Bonus slot which becomes Reserved for J
+  Scenario: Adding J converts an existing Bonus slot to Reserved and displaces fairly
+    Given the player list is [A, B, D, E, F, G, H, I]
+    And I have generated the Big Toss resulting in 2 games where H and I have Reserved slots in game 2 and other slots are Bonus
+    When I add player J
+    Then player J takes over a Bonus slot in an existing game (prefer the earliest game with Bonus slots)
+    And that slot becomes Reserved for J
+    And the displaced player is selected by highest session Bonus slot count (breaking ties by fewest games in current Big Toss, earliest lastPlayedAt, then name)
+    And there are still exactly 2 games in the Big Toss
+    And an example valid allocation for game 2 is teamA [H, I, J] and teamB [A, B, D] subject to fairness rules
+
+  # Removal from a Reserved slot with no collapsible game -> direct replacement (Option B)
+  Scenario: Removing a Reserved player without a Bonus-only game keeps game count and fills directly
+    Given the player list is [A, B, C, D, E, F, G, H, I, J]
+    And I have generated the Big Toss producing 2 games
+    And all games have at least one Reserved slot
+    When I remove player A who was in a Reserved slot in game 1
+    And there is no later game containing only Bonus slots
+    Then the number of games remains 2
+    And a fair replacement is chosen to fill A's Reserved slot in game 1 using the Bonus fairness priority among eligible players not in game 1
+    And no player appears twice within the same game
+
+  # General fairness validation for Bonus attribution
+  Scenario Outline: Bonus slots are assigned to players with the fewest session bonus participations
+    Given an active Big Toss with <initialCount> players and <bonusCount> bonus slots to fill
+    And per-player session bonus counts are <bonusCounts>
+    When I allocate bonus slots
+    Then the set of players chosen for bonus slots minimizes session bonus counts
+    And ties are broken by fewest games in current Big Toss, earliest lastPlayedAt, then name
+
+    Examples:
+      | initialCount | bonusCount | bonusCounts                          |
+      | 7            | 5          | A:0,B:0,C:0,D:0,E:0,F:0,G:0         |
+      | 8            | 4          | A:2,B:1,C:1,D:0,E:0,F:0,G:0,H:0     |
+      | 10           | 2          | A:1,B:1,C:0,D:0,E:0,F:0,G:0,H:0,I:0,J:0 |
+      | 11           | 5          | A:3,B:2,C:2,D:1,E:1,F:1,G:1,H:0,I:0,J:0,K:0 |
+```
 
 ### US-006 Assign refs per Game
 As an organizer, I want 2 refs per Game, prioritizing those who reffed less this Session and are not playing this Game.

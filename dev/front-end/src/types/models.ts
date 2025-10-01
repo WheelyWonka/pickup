@@ -7,6 +7,8 @@ export type GameStatus = 'scheduled' | 'playing' | 'completed';
 export type BigTossStatus = 'scheduled' | 'completed';
 export type SessionStatus = 'active';
 
+export type SlotType = 'reserved' | 'bonus';
+
 export interface PlayerSessionStats {
   gamesPlayed: number;
   filledGamesPlayed: number;
@@ -14,6 +16,7 @@ export interface PlayerSessionStats {
   refsAssistant: number;
   lastPlayedAt: number | null;
   lastRefedAt: number | null;
+  bonusSlotsUsed: number; // counts how many Bonus slots a player has occupied this session
 }
 
 export interface PlayerBigTossStats {
@@ -30,9 +33,14 @@ export interface Player {
   bigTossStats: PlayerBigTossStats;
 }
 
+export interface TeamSlot {
+  playerId: string;
+  slotType: SlotType;
+}
+
 export interface GameTeams {
-  teamA: string[]; // Player IDs (3 players)
-  teamB: string[]; // Player IDs (3 players)
+  teamA: TeamSlot[]; // 3 slots
+  teamB: TeamSlot[]; // 3 slots
 }
 
 export interface GameRefs {

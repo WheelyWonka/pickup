@@ -5,7 +5,7 @@
 import type { Session } from '../types/models';
 
 export const STORAGE_KEY = 'pickup.session.active';
-export const STORAGE_VERSION = 2; // bump when data format changes
+export const STORAGE_VERSION = 4; // bump when data format changes
 
 export interface StorageData {
   version: number;

@@ -6,7 +6,7 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import type { Session, Player, BigToss } from '../types/models';
-import { createNewSession, createNewPlayer, generateGames, assignRefsToGames } from '../core';
+import { createNewSession, createNewPlayer, generateGames, assignRefsToGames, addPlayerToBigToss, removePlayerFromBigToss } from '../core';
 import { saveSession, loadSession, clearSession, generateId, getStoredDataVersion, STORAGE_VERSION } from '../utils';
 
 interface SessionState {
@@ -107,19 +107,14 @@ const sessionReducer = (state: SessionState, action: SessionAction): SessionStat
         if (scheduledIndex >= 0) {
           const existing = updatedSession.bigTosses[scheduledIndex];
           try {
-            let games = generateGames({
-              players: updatedSession.players,
-              bigTossId: existing.id,
-              startIndex: 0,
-            });
-            games = assignRefsToGames(games, updatedSession.players);
-
-            const regenerated = { ...existing, games };
+            const adj = addPlayerToBigToss(existing, updatedSession.players, newPlayer.id);
+            const gamesWithRefs = assignRefsToGames(adj.bigToss.games, adj.players);
+            const regenerated = { ...adj.bigToss, games: gamesWithRefs };
             const newBigTosses = [...updatedSession.bigTosses];
             newBigTosses[scheduledIndex] = regenerated;
-            updatedSession = { ...updatedSession, bigTosses: newBigTosses };
+            updatedSession = { ...updatedSession, bigTosses: newBigTosses, players: adj.players };
           } catch (e) {
-            // If generation fails (e.g., < 6 players), ignore regeneration
+            // ignore if adjustment fails
           }
         }
       }
@@ -153,19 +148,14 @@ const sessionReducer = (state: SessionState, action: SessionAction): SessionStat
         if (scheduledIndex >= 0) {
           const existing = updatedSession.bigTosses[scheduledIndex];
           try {
-            let games = generateGames({
-              players: updatedSession.players,
-              bigTossId: existing.id,
-              startIndex: 0,
-            });
-            games = assignRefsToGames(games, updatedSession.players);
-
-            const regenerated = { ...existing, games };
+            const adj = removePlayerFromBigToss(existing, updatedSession.players, action.payload);
+            const gamesWithRefs = assignRefsToGames(adj.bigToss.games, adj.players);
+            const regenerated = { ...adj.bigToss, games: gamesWithRefs };
             const newBigTosses = [...updatedSession.bigTosses];
             newBigTosses[scheduledIndex] = regenerated;
-            updatedSession = { ...updatedSession, bigTosses: newBigTosses };
+            updatedSession = { ...updatedSession, bigTosses: newBigTosses, players: adj.players };
           } catch (e) {
-            // If generation fails (e.g., < 6 players), remove the scheduled Big Toss as it is no longer valid
+            // If adjustment fails, remove the scheduled Big Toss as it is no longer valid
             const newBigTosses = updatedSession.bigTosses.filter((_, idx) => idx !== scheduledIndex);
             updatedSession = { ...updatedSession, bigTosses: newBigTosses };
           }
@@ -207,25 +197,26 @@ const sessionReducer = (state: SessionState, action: SessionAction): SessionStat
         const bigTossIndex = state.session.bigTosses.length;
 
         // Generate games with team assignments
-        let games = generateGames({
+        const result = generateGames({
           players: state.session.players,
           bigTossId,
           startIndex: 0,
         });
 
         // Assign refs to all games
-        games = assignRefsToGames(games, state.session.players);
+        const gamesWithRefs = assignRefsToGames(result.games, result.updatedPlayers);
 
         const newBigToss: BigToss = {
           id: bigTossId,
           index: bigTossIndex,
           createdAt: Date.now(),
-          games,
+          games: gamesWithRefs,
           status: 'scheduled',
         };
 
         const updatedSession = {
           ...state.session,
+          players: result.updatedPlayers,
           bigTosses: [...state.session.bigTosses, newBigToss],
         };
 

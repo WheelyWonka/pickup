@@ -32,6 +32,7 @@ export const createNewPlayer = (name: string): Player => ({
     refsAssistant: 0,
     lastPlayedAt: null,
     lastRefedAt: null,
+    bonusSlotsUsed: 0,
   },
   bigTossStats: {
     gamesPlayed: 0,
