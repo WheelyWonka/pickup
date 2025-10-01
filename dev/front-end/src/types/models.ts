@@ -44,8 +44,8 @@ export interface GameTeams {
 }
 
 export interface GameRefs {
-  mainId: string;
-  assistantId: string;
+  mainId: string | null;
+  assistantId: string | null;
 }
 
 export interface Game {

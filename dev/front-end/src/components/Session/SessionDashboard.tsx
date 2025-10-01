@@ -73,13 +73,13 @@ const SessionDashboard: React.FC = () => {
     </div>
   );
 
-  const renderRefs = (mainId: string, assistantId: string) => {
-    const mainName = mainId ? getPlayerName(mainId) : 'TBD';
-    const asstName = assistantId ? getPlayerName(assistantId) : 'TBD';
+  const renderRefs = (mainId: string | null, assistantId: string | null) => {
+    const mainName = mainId ? getPlayerName(mainId) : 'Needs ref';
+    const asstName = assistantId ? getPlayerName(assistantId) : 'Needs ref';
     return (
       <div className="flex items-center gap-3 text-xs text-gray-600">
-        <span className="inline-flex items-center gap-1"><span className="w-2 h-2 bg-blue-400 rounded-full"></span>Main: <span className="font-medium">{mainName}</span></span>
-        <span className="inline-flex items-center gap-1"><span className="w-2 h-2 bg-indigo-400 rounded-full"></span>Asst: <span className="font-medium">{asstName}</span></span>
+        <span className="inline-flex items-center gap-1"><span className="w-2 h-2 bg-blue-400 rounded-full"></span>Main: <span className={`font-medium ${mainId ? '' : 'text-red-600'}`}>{mainName}</span></span>
+        <span className="inline-flex items-center gap-1"><span className="w-2 h-2 bg-indigo-400 rounded-full"></span>Asst: <span className={`font-medium ${assistantId ? '' : 'text-red-600'}`}>{asstName}</span></span>
       </div>
     );
   };

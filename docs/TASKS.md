@@ -282,52 +282,139 @@ Feature: US-005 Compose Games (team building)
       | 11           | 5          | A:3,B:2,C:2,D:1,E:1,F:1,G:1,H:0,I:0,J:0,K:0 |
 ```
 
-### US-006 Assign refs per Game
-As an organizer, I want 2 refs per Game, prioritizing those who reffed less this Session and are not playing this Game.
+### US-006 Assign refs per Game ✅ DONE
+As an organizer, I want 2 refs per Game, prioritizing those who reffed less this Session and are not playing this Game, and I want ref assignments to update automatically following the same update paths as player/team changes in US-005.
 
 - Acceptance Criteria
-  - Each Game has 2 refs: main and assistant
-  - Refs must not be among 6 playing in that Game
-  - Ref selection prioritizes players with lowest total reffing count in the Session; tie-breaker: earliest last reffed time, then name
-  - Persist ref assignments in Game
-- Implementation Notes
-  - Game shape adds: { refs: { mainId, assistantId } }
+  - Roles and eligibility
+    - Each Game has exactly 2 ref roles: main and assistant
+    - Refs must be distinct players and must not be among the 6 players assigned to that Game (Reserved or Bonus)
+    - Only available players are eligible to ref
+    - If fewer than 2 eligible refs exist:
+      - Assign as many as possible
+      - Leave remaining roles unassigned (null) with a visible "Needs ref" indicator
+  - Fairness and selection priority
+    - Candidate pool for a Game: all available players not playing in that Game
+    - Sort candidates by (ascending):
+      1) sessionAssignedRefsTotal (refsMainAssigned + refsAssistantAssigned across the Session, including scheduled assignments)
+      2) lastRefedAt (earlier first; if missing, use joinedAt; if still tied, use name)
+      3) name (alphabetical)
+    - Assignment: pick first candidate as main, second as assistant
+    - A player may ref multiple Games within the same Big Toss; there is no cooldown between consecutive Games by default
+  - Triggers (must mirror US-005 player update paths)
+    - On initial Big Toss generation: assign refs for all scheduled Games after teams are generated
+    - On add player to Big Toss (new Game created or Bonus->Reserved conversion):
+      - Assign refs for any newly created Games
+      - Re-evaluate refs for affected Games where roster changes make existing refs ineligible (ref is now playing) or fairness changes
+    - On remove player from Big Toss:
+      - If a Game is deleted due to having only Bonus slots, remove its refs
+      - For Games whose rosters changed, re-evaluate refs; any ref who becomes a player in that Game must be replaced
+    - On manual team overrides (US-013): re-run ref selection for that Game
+  - Integrity and persistence
+    - Prevent assigning the same player as both main and assistant in the same Game
+    - Do not assign a player as ref in a Game where they are a player (Reserved or Bonus)
+    - Persist ref assignments immediately
+    - Stats increment for refs (refsMain, refsAssistant, lastRefedAt) occur on Game completion; selection fairness uses assigned-to-ref counts (scheduled + completed) for distribution during scheduling
+  - UI expectations
+    - Display main and assistant with player names and a badge (Main/Assistant)
+    - Display a clear indicator for unassigned roles (e.g., "Needs ref")
 
-### US-007 Handle last Game missing players (Filled Game logic)
-As an organizer, I want missing player slots in the last Game of a Big Toss to be filled from those who already played in this Big Toss, prioritizing fairness.
+- Implementation Details
+  - Ref selector (`dev/front-end/src/core/refSelector.ts`)
+    - `assignRefsToGames(games, players): Game[]` recalculates refs across the provided games
+    - Candidate pool excludes players in the game and unavailable/inactive
+    - Fairness sorts by in-memory assigned counts across current scheduled games, then earliest `lastRefedAt`, then name
+    - Supports partial pools: leaves null for unassigned roles
+  - Store integration (`dev/front-end/src/store/SessionContext.tsx`)
+    - After `generateGames` (US-005), refs are assigned for all scheduled games
+    - After `addPlayerToBigToss`/`removePlayerFromBigToss`, affected games are re-assigned refs
+  - Data model
+    - `Game.refs: { mainId: string | null, assistantId: string | null }`
+    - `Player.sessionStats` used for tie-breakers (`lastRefedAt`)
 
-- Acceptance Criteria
-  - If last Game has < 6 players from initial distribution, mark it as "Game to fill"
-  - Fill missing slots with players who already played in the current Big Toss
-  - Priority order: players with lowest count of Filled Games during this Session; tie-breaker: least games played in this Big Toss; then earliest last played
-  - Do not assign the same player to both teams in the same Game
-- Implementation Notes
-  - Track per-player counters: sessionGamesPlayed, sessionFilledGamesPlayed, sessionRefsMain, sessionRefsAssistant, bigTossGamesPlayed
+#### Gherkin scenarios for US-006
 
-### US-008 Add new players during a Big Toss
-As an organizer, I want to add new players while a Big Toss is scheduled or running.
+```gherkin
+Feature: US-006 Assign refs per Game
+  As an organizer
+  I want two refs per Game with fair distribution and automatic updates
+  So that ref assignments stay valid and balanced when rosters change
 
-- Acceptance Criteria
-  - WHEN a new player is added and there exists at least one "Game to fill" with bench substitutions possible
-    - THEN the new player takes a slot from a player who had been reassigned as Filled Game participant
-    - AND the replaced player returns to bench eligibility
-  - WHEN no "Game to fill" exists
-    - THEN create a new "Game to fill" appended at the end of the current Big Toss
-    - AND apply the Filled Game logic to complete it (including refs selection)
-- Implementation Notes
-  - Visually flag which slots were filled by reassignments
+  Background:
+    Given an active Session
+    And the Big Toss teams are generated per US-005
+    And ref fairness priority is by lowest sessionAssignedRefsTotal, then earliest lastRefedAt (joinedAt if missing), then name
 
-### US-009 Advance through Games and Big Tosses
-As an organizer, I want to mark Games as started and completed, and generate the next Big Toss when all are done.
+  # Basic assignment with limited eligible refs
+  Scenario: 7 players, game 1 has only one eligible ref
+    Given the player list is [A, B, C, D, E, F]
+    And I generate the Big Toss (game 1 has players [A, B, C, D, E, F])
+    When I add player G and create game 2 per US-005
+    Then for game 1, the eligible ref pool is [G]
+    And game 1 has main assigned to G and assistant is unassigned
+    And game 2 assigns two refs chosen from players not playing in game 2 by fairness
 
-- Acceptance Criteria
-  - Game states: scheduled -> playing -> completed (no skipping forward; allow revert back one step)
-  - When all Games in a Big Toss are completed, a new Big Toss can be generated from the current roster with fairness carry-over stats
-  - Stats update on state transitions to 'completed'
-- Implementation Notes
-  - Prevent overlapping 'playing' Games unless explicitly allowed via a setting (default single active Game)
+  # Ref becomes ineligible due to roster change (must be replaced)
+  Scenario: A ref becomes a player in the same game after an add
+    Given game 1 has players [A, B, C, D, E, F] and main ref is G
+    And I add players H, I creating game 2 per US-005
+    When game 1 roster changes so that G is now a player in game 1 (due to consolidation or reassignment)
+    Then G must be removed as a ref from game 1
+    And a new eligible ref is selected by fairness for game 1
+    And if no eligible ref exists, the role remains unassigned
 
-### US-010 View and track fairness statistics
+  # Game deletion clears refs
+  Scenario: Deleting a game with only Bonus slots removes its ref assignments
+    Given two games exist and game 2 contains only Bonus slots
+    And game 2 has main and assistant assigned
+    When game 2 is deleted per US-005 rules
+    Then game 2's ref assignments are removed
+    And no references to those assignments remain in state
+
+  # Direct ref selection fairness
+  Scenario Outline: Refs are selected by lowest assigned counts and earliest lastRefedAt
+    Given a game with candidate refs <candidates>
+    And their sessionAssignedRefsTotal are <assignedCounts>
+    And their lastRefedAt are <lastRefedAt>
+    When refs are assigned
+    Then main is the candidate with the lowest assigned count and earliest lastRefedAt by tie-break
+    And assistant is the next best candidate by the same ordering
+
+    Examples:
+      | candidates         | assignedCounts      | lastRefedAt                  |
+      | [G, H]            | G:0,H:1             | G:2024-01-01,H:2024-01-02    |
+      | [G, H, I]         | G:1,H:1,I:1         | G:null,H:2024-01-01,I:null   |
+      | [M, N, O, P]      | M:2,N:0,O:0,P:0     | M:2024-01-01,N:null,O:null,P:2023-12-01 |
+
+  # Partial assignment when pool is small
+  Scenario: Only one eligible ref exists
+    Given a game where the candidate pool is [X]
+    When refs are assigned
+    Then main is X
+    And assistant is unassigned
+
+  # Full reassignment on manual team overrides
+  Scenario: Manual team change forces ref recalculation
+    Given a scheduled game with main and assistant assigned
+    When I swap players between teams in that game
+    Then ref assignments for that game are recalculated
+    And any ref who becomes a player is replaced by the next fair candidate
+
+  # No cooldown between consecutive games by default
+  Scenario: Same person can ref consecutive games if still the fairest
+    Given two consecutive scheduled games G1 and G2
+    And player Q is selected as a ref for G1 by fairness
+    When assigning refs for G2
+    Then Q may be selected again if they remain the fairest eligible candidate
+
+  # Unavailability exclusion
+  Scenario: Unavailable players are excluded from ref selection
+    Given player R is marked unavailable
+    When assigning refs for any game
+    Then R is not considered in the candidate pool
+```
+
+### US-007 View and track fairness statistics
 As a participant, I want to see fair distribution of play time and reffing.
 
 - Acceptance Criteria
@@ -336,47 +423,6 @@ As a participant, I want to see fair distribution of play time and reffing.
   - Export stats as CSV
 - Implementation Notes
   - Derived fields recomputed on each state change
-
-### US-011 Persist and restore Session
-As a user, I want my Session to persist across refreshes.
-
-- Acceptance Criteria
-  - All changes persist to localStorage immediately
-  - On load, the app restores the active Session if present
-  - Provide "Reset Session" control that clears localStorage for the active Session key
-- Implementation Notes
-  - Consider versioning: { version: 1 } at root for migrations
-
-### US-012 Edit player availability
-As an organizer, I want to mark players unavailable so they are excluded from upcoming Games and ref selection.
-
-- Acceptance Criteria
-  - Toggle availability; unavailable players are not considered for team or ref selection
-  - If a currently scheduled Game includes a player who becomes unavailable, flag the Game as conflicted requiring manual resolve
-
-### US-013 Manual overrides
-As an organizer, I want to manually adjust a Game (teams/refs) before it starts to resolve special cases.
-
-- Acceptance Criteria
-  - Drag-and-drop or selector UI to swap players between teams within a Game
-  - Re-run ref assignment with current constraints or manually pick refs (with validation preventing players in the Game)
-  - Persist overrides and do not auto-overwrite on subsequent recalculations unless explicitly requested
-
-### US-014 Undo/redo recent actions
-As a user, I want to undo/redo last actions to recover from mistakes.
-
-- Acceptance Criteria
-  - Maintain a bounded action history (e.g., last 20 actions)
-  - Undo reverts to previous state and persists
-  - Redo reapplies next state and persists
-
-### US-015 UI/UX shell
-As a user, I want a clean, responsive UI to operate the app.
-
-- Acceptance Criteria
-  - Responsive layout for mobile/tablet/desktop
-  - Clear indicators for current Game, next Game, and bench list
-  - Accessible controls with keyboard navigation for critical actions
 
 ---
 
