@@ -21,16 +21,12 @@ const SessionSummary: React.FC = () => {
 
   return (
     <div className="rounded-xl bg-gradient-to-br from-white to-orange-50/30 p-4 sm:p-6 shadow-md border border-orange-100">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-        <div className="text-center sm:text-left">
-          <div className="text-orange-500 text-xs sm:text-sm font-semibold uppercase tracking-wide">Session ID</div>
-          <div className="font-mono text-gray-800 break-all text-xs sm:text-sm mt-1 bg-gray-100 px-2 py-1.5 sm:px-3 sm:py-2 rounded-md">{session.id}</div>
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
         <div className="text-center sm:text-left">
           <div className="text-pink-500 text-xs sm:text-sm font-semibold uppercase tracking-wide">Created</div>
           <div className="text-gray-800 font-medium mt-1 text-sm sm:text-base">{new Date(session.createdAt).toLocaleString()}</div>
         </div>
-        <div className="text-center sm:text-left sm:col-span-2 lg:col-span-1">
+        <div className="text-center sm:text-left">
           <div className="text-gray-500 text-xs sm:text-sm font-semibold uppercase tracking-wide">Overview</div>
           <div className="text-gray-800 font-medium mt-1 text-sm sm:text-base">
             <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">

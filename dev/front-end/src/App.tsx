@@ -30,7 +30,7 @@ function App() {
           </div>
         </header>
 
-        <main className="max-w-sm mx-auto p-3 sm:max-w-2xl sm:p-4 md:max-w-4xl md:p-6">
+        <main className="max-w-sm mx-auto p-3 sm:max-w-2xl sm:p-4 pt-0 md:max-w-4xl md:p-6">
           <div className="bg-white/90 backdrop-blur-sm text-gray-800 rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 shadow-lg border border-orange-200/30">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 mb-6 sm:mb-8">
               <div>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useSession } from '../../store/SessionContext';
 import type { Player } from '../../types/models';
+import PlayerList from '../Player/PlayerList';
 
 type TabType = 'players' | 'schedule' | 'stats';
 
@@ -10,11 +11,7 @@ const SessionDashboard: React.FC = () => {
   const session = state.session;
 
   if (!session) {
-    return (
-      <div className="rounded-md border border-dashed border-gray-300 p-8 text-center text-gray-600">
-        <p>No active session. Create a session to view the dashboard.</p>
-      </div>
-    );
+    return null;
   }
 
   const activePlayers = session.players.filter(p => p.active && p.available);
@@ -29,6 +26,7 @@ const SessionDashboard: React.FC = () => {
 
   const renderPlayersTab = () => (
     <div className="space-y-4 sm:space-y-6">
+      {/* Player Stats Cards */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4">
         <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-4 sm:p-6 rounded-xl border border-orange-200 shadow-md">
           <div className="text-2xl sm:text-3xl font-bold text-orange-600">{session.players.length}</div>
@@ -48,41 +46,8 @@ const SessionDashboard: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-xl shadow-md overflow-hidden">
-        <div className="px-4 py-3 sm:px-6 sm:py-4 border-b bg-gradient-to-r from-gray-50 to-orange-50">
-          <h3 className="font-semibold text-gray-900 text-base sm:text-lg">Player Roster</h3>
-        </div>
-        <div className="divide-y divide-gray-100">
-          {session.players.length === 0 ? (
-            <div className="px-4 py-8 sm:px-6 sm:py-12 text-center text-gray-500">
-              <div className="text-orange-400 mb-3">
-                <svg className="w-8 h-8 sm:w-10 sm:h-10 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-                </svg>
-              </div>
-              <p className="font-medium text-sm sm:text-base">No players added yet</p>
-              <p className="text-xs sm:text-sm mt-1">Add players to start building your roster</p>
-            </div>
-          ) : (
-            session.players.map((player) => (
-              <div key={player.id} className="px-4 py-3 sm:px-6 sm:py-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
-                <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
-                  <div className={`w-3 h-3 sm:w-4 sm:h-4 rounded-full shadow-sm flex-shrink-0 ${player.available ? 'bg-green-400' : 'bg-gray-300'}`} />
-                  <div className="min-w-0 flex-1">
-                    <span className="font-semibold text-gray-900 text-sm sm:text-base truncate">{player.name}</span>
-                    {!player.active && (
-                      <span className="ml-2 text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">Inactive</span>
-                    )}
-                  </div>
-                </div>
-                <div className="text-xs sm:text-sm text-gray-500 flex-shrink-0 ml-2">
-                  {new Date(player.joinedAt).toLocaleDateString()}
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
+      {/* Player Management */}
+      <PlayerList />
     </div>
   );
 

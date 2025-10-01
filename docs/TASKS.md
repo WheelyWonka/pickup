@@ -37,7 +37,7 @@ As an organizer, I want to create a new Session so I can start scheduling games.
   - localStorage key: pickup.session.active
 - **Implementation**: SessionToolbar component with confirmation flow, SessionSummary display, localStorage persistence
 
-### US-002 View Session dashboard
+### US-002 View Session dashboard ✅ DONE
 As an organizer, I want a dashboard to see players, schedule, and stats.
 
 - Acceptance Criteria
@@ -46,6 +46,7 @@ As an organizer, I want a dashboard to see players, schedule, and stats.
   - Shows aggregate stats: per-player games played, filled games played, reffing count (main/assistant), fairness indicators
 - Implementation Notes
   - Provide tabs: Players | Schedule | Stats
+- **Implementation**: SessionDashboard component with responsive tabs, player stats cards, Big Toss display, mobile-optimized design with Bungee Inline font logo
 
 ### US-003 Manage players in Session
 As an organizer, I want to add or remove players from the Session.
