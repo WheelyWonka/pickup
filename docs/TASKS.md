@@ -20,7 +20,7 @@
 
 ---
 
-### US-001 Create a new Session
+### US-001 Create a new Session ✅ DONE
 As an organizer, I want to create a new Session so I can start scheduling games.
 
 - Acceptance Criteria
@@ -35,6 +35,7 @@ As an organizer, I want to create a new Session so I can start scheduling games.
 - Implementation Notes
   - Session shape: { id, createdAt, players: [], bigTosses: [], stats: { perPlayer }, status: 'active' }
   - localStorage key: pickup.session.active
+- **Implementation**: SessionToolbar component with confirmation flow, SessionSummary display, localStorage persistence
 
 ### US-002 View Session dashboard
 As an organizer, I want a dashboard to see players, schedule, and stats.
