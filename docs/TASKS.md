@@ -108,14 +108,31 @@ As an organizer, I want to generate a Big Toss cycle of Games from the current p
 - **Developer note**: When changing the saved data format in future development, update STORAGE_VERSION in `src/utils/localStorage.ts`
 
 ### US-005 Compose Games (team building)
-As an organizer, I want each Game to have two teams of 3 players.
+As an organizer, I want each Game to have two teams of 3 players with a flexible "Bonus Slot" system for roster changes.
 
 - Acceptance Criteria
   - Each scheduled Game has exactly 6 unique players
   - Teams are balanced by minimizing repeats and distributing players fairly
-  - Store teams as: { teamA: [playerId x3], teamB: [playerId x3] }
+  - **Bonus Slot System**: Games can contain mix of regular slots (protected core) and bonus slots (fillable)
+  - **Roster Change Impact**: Only Games with bonus slots are eligible for automatic recalculation when players are added/removed
+  - **Protected Games**: Games with no bonus slots remain unchanged unless an assigned player is removed
+  - **New Player Assignment**: New players are assigned to earliest games containing bonus slots first
+  - **Automatic Conflict Resolution**: When players are removed, automatically resolve with minimal disruption
+  - Store teams as: { teamA: [{ playerId, isBonus: boolean } x3], teamB: [{ playerId, isBonus: boolean } x3] }
 - Implementation Notes
   - Use round-robin or snake draft from shuffled roster with constraints to minimize repeated pairings within the Big Toss
+  - **Bonus Slot Logic**: 
+    - Create core 6 players when possible, flag missing slots as bonus slots
+    - Players in bonus slots selected using fairness priority (fewest filled games → fewest games in current Big Toss → earliest last played)
+    - No limit on bonus slots per game - unlimited as needed for fairness
+    - Players can occupy multiple bonus slots per Big Toss if fairness requires
+  - **Automatic Resolution**:
+    - Removed player in regular slot: Auto-replace with bonus slot player from elsewhere (swap), or promote bench player to new bonus slot
+    - Removed player in bonus slot: Re-run bonus filling logic, keep other slots unchanged
+    - No manual confirmation needed - prefer automatic fixes
+  - **Fairness Tracking**: Bonus slots count toward "Filled Games" stats (separate from regular games)
+  - **Data Model**: Extend Game.teams to include slot metadata, keep Game.isToFill for UI visibility
+  - **UI Indicators**: Visual distinction between bonus vs regular slots, show "protected" status for games without bonus slots
 
 ### US-006 Assign refs per Game
 As an organizer, I want 2 refs per Game, prioritizing those who reffed less this Session and are not playing this Game.
