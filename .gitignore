@@ -1,0 +1,114 @@
+# --- OS / Editor ---
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*.orig
+*.log
+*.tmp
+
+# VSCode
+.vscode/
+.history/
+
+# IntelliJ / WebStorm / PyCharm
+.idea/
+*.iml
+
+# --- Node / JavaScript / TypeScript ---
+node_modules/
+.npm/
+.pnpm-store/
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+.yarnrc.yml
+
+# Build outputs
+.dist/
+dist/
+build/
+.out/
+coverage/
+.nyc_output/
+.next/
+.nuxt/
+.storybook-out/
+.turbo/
+
+# Test / tooling
+coverage/
+.jest-cache/
+.jest/
+.eslintcache
+stylelintcache
+
+# Package manager logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# --- Front-end frameworks ---
+.svelte-kit/
+.angular/
+.nuxt/
+.next/
+.vite/
+.cache/
+
+# --- Node.js backend (TypeScript) ---
+lib/
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+
+# --- E2E (Cypress / Playwright) ---
+cypress/screenshots/
+cypress/videos/
+.cy
+.playwright/**
+!**/playwright.config.*
+playwright-report/
+test-results/
+
+# --- Docker / Env ---
+.env
+.env.*
+!.env.example
+!.env.sample
+.docker/
+
+# --- Misc ---
+.cache/
+.tmp/
+.temp/
+logs/
+*.pid
+pids/
+*.seed
+*.secrets*
+
+# --- Monorepo tools ---
+lerna-debug.log
+nx-report.html
+.nx/
+
+# --- Local databases ---
+*.db
+*.sqlite
+*.sqlite3
+
+# --- Images / design exports ---
+*.sketch
+*.psd
+*.ai
+
+# --- macOS metadata (redundant but explicit) ---
+.AppleDouble
+.LSOverride
+Icon?
+._*
+
