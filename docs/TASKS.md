@@ -107,7 +107,7 @@ As an organizer, I want to generate a Big Toss cycle of Games from the current p
 - **User notice modal**: Warns about data format update with "I understand" action to clear outdated data
 - **Developer note**: When changing the saved data format in future development, update STORAGE_VERSION in `src/utils/localStorage.ts`
 
-### US-005 Compose Games (team building)
+### US-005 Compose Games (team building) ✅ DONE
 As an organizer, I want each Game to have two teams of 3 players with a flexible Reserved/Bonus Slot system so roster changes can be handled fairly during a Big Toss.
 
 - Acceptance Criteria
@@ -154,6 +154,28 @@ As an organizer, I want each Game to have two teams of 3 players with a flexible
     - chooseBonusOccupantsByFairness()
   - Example lineups shown in scenarios are illustrative only; actual allocations may differ while meeting fairness and constraints
   - Session-scope counters: session Bonus slot counts reset when a new Session starts and accumulate across all Big Tosses within the Session
+
+ - Implementation Details
+   - Data model updates (see `dev/front-end/src/types/models.ts`):
+     - Added `SlotType = 'reserved' | 'bonus'` and `TeamSlot` structure
+     - Changed `GameTeams` to use `TeamSlot[]` per team (stores slot type per player)
+     - Added `bonusSlotsUsed` to `Player.sessionStats` for fairness tie-breakers
+   - Core algorithms:
+     - `generateGames` (`dev/front-end/src/core/teamGenerator.ts`):
+       - Ensures one Reserved slot per player across the Big Toss (`ceil(N/6)` games)
+       - Fills remaining slots in the last game as Bonus using fairness: fewest `bonusSlotsUsed`, then fewest games in current Big Toss, then earliest `lastPlayedAt`, then name
+       - Returns `{ games, updatedPlayers }` and increments `bonusSlotsUsed` for assigned Bonus slots
+     - Big Toss adjustments (`dev/front-end/src/core/bigTossAdjustments.ts`):
+       - `addPlayerToBigToss`: creates a new game with the new player Reserved or converts an existing Bonus to Reserved (displacing by fairness)
+       - `removePlayerFromBigToss`: consolidates a vacated Reserved by moving a Reserved from a later game that becomes bonus-only (then deletes it) or applies Option B replacement using fairness
+       - Option B fix: if the fairest replacement already has a Reserved in this Big Toss, assign them as Bonus instead of Reserved
+   - Ref assignment (`dev/front-end/src/core/refSelector.ts`): updated to read player IDs from `TeamSlot` and excludes playing players
+   - Store integration (`dev/front-end/src/store/SessionContext.tsx`):
+     - Uses `generateGames` on initial Big Toss creation; reassigns refs afterwards
+     - On add/remove while a Big Toss is scheduled, applies `addPlayerToBigToss`/`removePlayerFromBigToss` and reassigns refs
+   - UI (`dev/front-end/src/components/Session/SessionDashboard.tsx`):
+     - Schedule tab shows per-game rosters with player names and Reserved/Bonus badges, plus refs
+   - Persistence/versioning (`dev/front-end/src/utils/localStorage.ts`): bumped `STORAGE_VERSION` to 4 to reflect data model changes
 
 #### Gherkin scenarios for US-005
 
