@@ -414,7 +414,7 @@ Feature: US-006 Assign refs per Game
     Then R is not considered in the candidate pool
 ```
 
-### US-007 View and track fairness statistics
+### US-007 View and track fairness statistics ✅ DONE
 As a participant, I want to see fair distribution of play time and reffing.
 
 - Acceptance Criteria
@@ -483,6 +483,17 @@ As a participant, I want to see fair distribution of play time and reffing.
   - Persistence & performance
     - No extra persistence; derived from existing state
     - Use memoization and lightweight virtualization if row count > 50
+
+- Implemented Details (codebase)
+  - Core selectors implemented in `dev/front-end/src/core/statsSelectors.ts`:
+    - Per-player session stats (games, reserved, bonus, refs assigned, bench wait, streak, fairness indicator)
+    - Per-player current Big Toss stats (games in Big Toss, hasReserved, bonus count, eligibleToRefNow)
+    - Big Toss summary (numGames, totalBonusSlots, per-player reserved/bonus)
+    - Ref distribution (coverage and per-player assigned counts)
+  - UI: `StatsView` integrated in Stats tab with polished cards and tables:
+    - Sticky table headers, zebra rows, numeric tabular alignment, colored badges
+    - Tabs: Per-Player | Big Toss Summary | Ref Distribution
+  - Performance: selectors computed via memoization with lightweight rendering
 
 ---
 
