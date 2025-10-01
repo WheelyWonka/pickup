@@ -1,0 +1,109 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.app {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+}
+
+.app-header {
+  padding: 2rem;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.app-header h1 {
+  font-size: 3rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.app-header p {
+  font-size: 1.2rem;
+  opacity: 0.9;
+}
+
+.app-main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.welcome-message {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 16px;
+  padding: 2rem;
+  color: #333;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.welcome-message h2 {
+  color: #667eea;
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.welcome-message > p {
+  font-size: 1.1rem;
+  color: #666;
+  margin-bottom: 2rem;
+}
+
+.info-box {
+  background: #f8f9fa;
+  border-left: 4px solid #667eea;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.info-box h3 {
+  color: #667eea;
+  font-size: 1.3rem;
+  margin-bottom: 1rem;
+  margin-top: 1.5rem;
+}
+
+.info-box h3:first-child {
+  margin-top: 0;
+}
+
+.info-box ul {
+  list-style-position: inside;
+  line-height: 1.8;
+  color: #555;
+}
+
+.info-box li {
+  margin-bottom: 0.5rem;
+  padding-left: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  .app-header h1 {
+    font-size: 2rem;
+  }
+
+  .app-header p {
+    font-size: 1rem;
+  }
+
+  .app-main {
+    padding: 1rem;
+  }
+
+  .welcome-message {
+    padding: 1.5rem;
+  }
+
+  .welcome-message h2 {
+    font-size: 1.5rem;
+  }
+}
