@@ -133,6 +133,60 @@ As an organizer, I want each Game to have two teams of 3 players with a flexible
   - **Fairness Tracking**: Bonus slots count toward "Filled Games" stats (separate from regular games)
   - **Data Model**: Extend Game.teams to include slot metadata, keep Game.isToFill for UI visibility
   - **UI Indicators**: Visual distinction between bonus vs regular slots, show "protected" status for games without bonus slots
+- **Detailed Implementation Requirements**:
+  - **Data Structure Changes**:
+    - Update `Game.teams` from `{ teamA: [playerId x3], teamB: [playerId x3] }` to `{ teamA: [{ playerId, isBonus: boolean } x3], teamB: [{ playerId, isBonus: boolean } x3] }`
+    - Each slot now has: `{ playerId: string, isBonus: boolean }`
+    - Keep `Game.isToFill` boolean for UI display purposes
+    - Update localStorage version if structure changes
+  - **Initial Game Generation**:
+    - When creating games from 6+ players: all slots are regular slots (`isBonus: false`)
+    - When creating games from <6 players: missing slots are bonus slots (`isBonus: true`)
+    - When creating games from >6 players: extra players beyond 6 are assigned to bonus slots in existing games
+  - **Player Addition Logic**:
+    - Find earliest game with at least one bonus slot
+    - Replace bonus slot player with new player
+    - If no bonus slots exist, create new "to-fill" game with all slots as bonus slots
+    - Re-run fairness algorithm to assign players to bonus slots
+  - **Player Removal Logic**:
+    - **If removed player is in regular slot**:
+      - Find a player in a bonus slot from any other game
+      - Swap them (regular slot player moves to bonus slot, bonus slot player moves to regular slot)
+      - If no bonus slot players exist, promote a bench player to new bonus slot in that game
+      - If no bench players, mark game as "to-fill" and require manual resolution
+    - **If removed player is in bonus slot**:
+      - Re-run bonus slot filling algorithm for that game only
+      - Keep all regular slots unchanged
+      - Assign new player to bonus slot using fairness priority
+  - **Fairness Algorithm for Bonus Slots**:
+    - Priority order: `sessionFilledGamesPlayed` (ascending) → `bigTossGamesPlayed` (ascending) → `lastPlayedAt` (ascending) → `name` (ascending)
+    - Players can occupy multiple bonus slots per Big Toss if needed
+    - Each bonus slot participation increments `sessionFilledGamesPlayed` counter
+  - **UI/UX Requirements**:
+    - **GameCard Component**: Show visual distinction between regular and bonus slots
+    - **Regular slots**: Normal styling, show "Protected" badge
+    - **Bonus slots**: Different background color, show "Fillable" badge
+    - **Game status**: Show "Protected" if no bonus slots, "Fillable" if has bonus slots
+    - **Player list**: Show which players are in bonus slots vs regular slots
+  - **State Management**:
+    - Update `generateGames()` function to create bonus slots when needed
+    - Update `assignRefsToGames()` to skip ref assignment for now (handled in US-006)
+    - Add `updateGameSlots()` function for roster change handling
+    - Add `findEarliestGameWithBonusSlots()` helper function
+    - Add `swapPlayersBetweenSlots()` helper function
+  - **Edge Cases**:
+    - **All players removed**: Mark all games as "to-fill"
+    - **Only 1 player left**: Create single-player game with 5 bonus slots
+    - **Duplicate player assignment**: Prevent same player in multiple slots of same game
+    - **Concurrent changes**: Handle multiple roster changes atomically
+  - **Testing Scenarios**:
+    - Add player to game with bonus slots
+    - Add player when no bonus slots exist
+    - Remove player from regular slot
+    - Remove player from bonus slot
+    - Remove all players from a game
+    - Add multiple players simultaneously
+    - Remove multiple players simultaneously
 
 ### US-006 Assign refs per Game
 As an organizer, I want 2 refs per Game, prioritizing those who reffed less this Session and are not playing this Game.
