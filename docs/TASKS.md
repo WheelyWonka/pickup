@@ -418,11 +418,71 @@ Feature: US-006 Assign refs per Game
 As a participant, I want to see fair distribution of play time and reffing.
 
 - Acceptance Criteria
-  - Show per-player: games played (session), filled games played (session), games played (current Big Toss), refs main, refs assistant
-  - Provide fairness indicators (e.g., highlight players with lowest counts to be prioritized next)
-  - Export stats as CSV
-- Implementation Notes
-  - Derived fields recomputed on each state change
+  - Per-player session stats (table with sortable columns)
+    - Games played (total)
+    - Reserved appearances (count of Reserved slots)
+    - Bonus appearances (count of Bonus slots; uses `bonusSlotsUsed`)
+    - Refs main (assigned/completed)
+    - Refs assistant (assigned/completed)
+    - Total refs assigned (main + assistant)
+    - Last played at, last reffed at
+    - Bench wait (number of games since last played)
+    - Consecutive games played (streak)
+    - Fairness indicator (relative rank vs session median for Reserved/Bonus/Refs)
+  - Per-player current Big Toss stats
+    - Games played in current Big Toss
+    - Has Reserved slot in current Big Toss (yes/no)
+    - Bonus slots in current Big Toss (count)
+    - Eligible to ref now (yes/no, with reason if no)
+  - Big Toss summary
+    - Number of games
+    - Total Bonus slots used (count and % of all slots)
+    - Players without Bonus appearances in this Big Toss
+    - Distribution charts: Reserved vs Bonus per player (histogram)
+  - Ref distribution summary
+    - Ref coverage: games fully staffed, missing main, missing assistant
+    - Ref load by player (bar chart of assigned counts)
+    - Players with zero ref assignments this Session
+    - Time since last ref per player
+  - Pairings and rotation quality
+    - Teammate pair frequency (top repeated pairs)
+    - Opponent pair frequency (optional)
+    - Balance metric per game (heuristic, e.g., variance of cumulative session play)
+  - Fairness/outliers
+    - Most underplayed (low Reserved count vs session mean)
+    - Most over-bonus (high Bonus vs session mean)
+    - Most over-ref (high ref assignments vs session mean)
+  - Filters and sorts
+    - Filter by availability and active/inactive
+    - Sort by games played, Bonus count, ref load, last played/refed, fairness indicator
+  - Export
+    - CSV export for per-player session stats and Big Toss snapshot
+  - Performance and UX
+    - Stats recompute reactively on state change (debounce 100ms)
+    - Large roster (60 players) renders within 200ms on modern devices
+
+- Implementation Details
+  - Data sources and selectors
+    - Compute derived stats from Session, BigToss, and Games (using `TeamSlot` types from US-005 and `Game.refs` from US-006)
+    - Create memoized selectors in `dev/front-end/src/core/statsSelectors.ts`:
+      - `selectPerPlayerSessionStats(session)`
+      - `selectPerPlayerBigTossStats(session, bigTossId)`
+      - `selectBigTossSummary(session, bigTossId)`
+      - `selectRefDistribution(session, bigTossId)`
+      - `selectPairingMetrics(session, bigTossId)`
+    - Bench wait is computed as number of scheduled games since `lastPlayedAt` up to current point
+  - UI components
+    - `StatsView` (`dev/front-end/src/components/Stats/StatsView.tsx`)
+      - Tabs: Per-Player | Big Toss Summary | Ref Distribution | Pairings
+      - Per-Player table: sticky header, sortable columns, search/filter controls
+      - Charts: simple bar/histogram using lightweight chart lib or custom SVG
+      - Export buttons for CSV (per-player and current Big Toss)
+  - Utilities
+    - CSV export helpers in `dev/front-end/src/utils/csv.ts`
+    - Pair frequency utility in `dev/front-end/src/utils/pairing.ts`
+  - Persistence & performance
+    - No extra persistence; derived from existing state
+    - Use memoization and lightweight virtualization if row count > 50
 
 ---
 
