@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
 import { useSession } from '../../store/SessionContext';
-import { useCallback } from 'react';
-import type { Player } from '../../types/models';
 import PlayerList from '../Player/PlayerList';
 import StatsView from '../Stats/StatsView';
 

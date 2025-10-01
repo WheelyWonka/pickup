@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useSession } from '../../store/SessionContext';
-import { selectPerPlayerSessionStats, selectPerPlayerBigTossStats, selectBigTossSummary, selectRefDistribution } from '../../core/statsSelectors';
+import { selectPerPlayerSessionStats, selectBigTossSummary, selectRefDistribution } from '../../core/statsSelectors';
 
 const StatsView: React.FC = () => {
   const { state } = useSession();
@@ -10,7 +10,6 @@ const StatsView: React.FC = () => {
   if (!session) return null;
 
   const perPlayer = useMemo(() => selectPerPlayerSessionStats(session), [session]);
-  const btStats = useMemo(() => selectPerPlayerBigTossStats(session), [session]);
   const btSummary = useMemo(() => selectBigTossSummary(session), [session]);
   const refSummary = useMemo(() => selectRefDistribution(session), [session]);
 

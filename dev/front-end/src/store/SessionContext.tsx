@@ -5,7 +5,7 @@
 
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import type { ReactNode } from 'react';
-import type { Session, Player, BigToss } from '../types/models';
+import type { Session, BigToss } from '../types/models';
 import { createNewSession, createNewPlayer, generateGames, assignRefsToGames, addPlayerToBigToss, removePlayerFromBigToss } from '../core';
 import { saveSession, loadSession, clearSession, generateId, getStoredDataVersion, STORAGE_VERSION } from '../utils';
 

@@ -2,7 +2,7 @@ import React from 'react';
 import { useSession } from '../../store/SessionContext';
 
 const SessionToolbar: React.FC = () => {
-  const { state, createSession, resetSession, generateBigToss } = useSession();
+  const { state, createSession, generateBigToss } = useSession();
   const hasActiveSession = !!state.session;
   const eligiblePlayers = state.session?.players.filter(p => p.active && p.available) || [];
   const canGenerateBigToss = eligiblePlayers.length >= 6;
@@ -17,11 +17,7 @@ const SessionToolbar: React.FC = () => {
     createSession();
   };
 
-  const handleReset = () => {
-    const ok = window.confirm('This will clear the active session from localStorage. Continue?');
-    if (!ok) return;
-    resetSession();
-  };
+
 
   const handleGenerateBigToss = () => {
     if (!canGenerateBigToss) {

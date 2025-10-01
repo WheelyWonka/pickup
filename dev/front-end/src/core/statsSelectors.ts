@@ -1,4 +1,4 @@
-import type { Session, BigToss, Game, Player, TeamSlot } from '../types/models';
+import type { Session, BigToss, Game, TeamSlot } from '../types/models';
 
 function getCurrentBigToss(session: Session): BigToss | null {
   if (session.bigTosses.length === 0) return null;

@@ -95,7 +95,7 @@ function makeEmptyGame(bigTossId: string, index: number): Game {
     bigTossId,
     status: 'scheduled',
     teams: { teamA: [], teamB: [] },
-    refs: { mainId: '', assistantId: '' },
+    refs: { mainId: null, assistantId: null },
   };
 }
 
@@ -222,21 +222,22 @@ export function removePlayerFromBigToss(bigToss: BigToss, players: Player[], rem
 
     if (moveFromIndex !== null) {
       const source = games[moveFromIndex];
-      let moved: TeamSlot | null = null;
-      const takeFrom = (arr: TeamSlot[]) => {
-        const idx = arr.findIndex(s => s.slotType === 'reserved');
-        if (idx >= 0) {
-          moved = arr[idx];
-          arr.splice(idx, 1);
+      // Find first reserved slot in source
+      let movedSlot: TeamSlot | undefined = source.teams.teamA.find(s => s.slotType === 'reserved');
+      if (movedSlot) {
+        source.teams.teamA = source.teams.teamA.filter(s => s !== movedSlot);
+      } else {
+        movedSlot = source.teams.teamB.find(s => s.slotType === 'reserved');
+        if (movedSlot) {
+          source.teams.teamB = source.teams.teamB.filter(s => s !== movedSlot);
         }
-      };
-      takeFrom(source.teams.teamA);
-      if (!moved) takeFrom(source.teams.teamB);
+      }
 
-      if (moved) {
+      if (movedSlot) {
         const target = games[vacatedGameIndex];
-        if (target.teams.teamA.length < 3) target.teams.teamA.push({ playerId: moved.playerId, slotType: 'reserved' });
-        else target.teams.teamB.push({ playerId: moved.playerId, slotType: 'reserved' });
+        const assign: TeamSlot = { playerId: movedSlot.playerId, slotType: 'reserved' };
+        if (target.teams.teamA.length < 3) target.teams.teamA.push(assign);
+        else target.teams.teamB.push(assign);
 
         // If source becomes bonus-only, delete it
         if (gameHasOnlyBonus(source)) {
