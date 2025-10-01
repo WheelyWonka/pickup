@@ -4,10 +4,10 @@
 
 import type { Session } from '../types/models';
 
-const STORAGE_KEY = 'pickup.session.active';
-const STORAGE_VERSION = 1;
+export const STORAGE_KEY = 'pickup.session.active';
+export const STORAGE_VERSION = 2; // bump when data format changes
 
-interface StorageData {
+export interface StorageData {
   version: number;
   session: Session;
 }
@@ -35,8 +35,8 @@ export const loadSession = (): Session | null => {
     
     // Version migration logic (for future use)
     if (data.version !== STORAGE_VERSION) {
-      console.warn('Session version mismatch, migration may be needed');
-      // TODO: Implement migration logic when needed
+      // Caller should detect and handle version mismatch
+      return null;
     }
 
     return data.session;
@@ -52,6 +52,22 @@ export const clearSession = (): void => {
   } catch (error) {
     console.error('Failed to clear session from localStorage:', error);
   }
+};
+
+export const getStoredData = (): StorageData | null => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (!stored) return null;
+    return JSON.parse(stored) as StorageData;
+  } catch (error) {
+    console.error('Failed to read stored data from localStorage:', error);
+    return null;
+  }
+};
+
+export const getStoredDataVersion = (): number | null => {
+  const data = getStoredData();
+  return data?.version ?? null;
 };
 
 

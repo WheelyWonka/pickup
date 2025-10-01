@@ -35,7 +35,12 @@ As an organizer, I want to create a new Session so I can start scheduling games.
 - Implementation Notes
   - Session shape: { id, createdAt, players: [], bigTosses: [], stats: { perPlayer }, status: 'active' }
   - localStorage key: pickup.session.active
-- **Implementation**: SessionToolbar component with confirmation flow, SessionSummary display, localStorage persistence
+- **Implementation Details**:
+  - **SessionToolbar**: New/Reset buttons with confirmation dialogs, gradient styling, mobile responsive
+  - **SessionSummary**: Displays session info (created date, player/big toss counts), hidden session ID
+  - **State management**: Context API with reducer pattern, localStorage persistence with versioning
+  - **Error handling**: User-friendly error messages, confirmation dialogs for destructive actions
+  - **Mobile optimization**: Responsive design, compact button layouts, proper touch targets
 
 ### US-002 View Session dashboard ✅ DONE
 As an organizer, I want a dashboard to see players, schedule, and stats.
@@ -46,7 +51,13 @@ As an organizer, I want a dashboard to see players, schedule, and stats.
   - Shows aggregate stats: per-player games played, filled games played, reffing count (main/assistant), fairness indicators
 - Implementation Notes
   - Provide tabs: Players | Schedule | Stats
-- **Implementation**: SessionDashboard component with responsive tabs, player stats cards, Big Toss display, mobile-optimized design with Bungee Inline font logo
+- **Implementation Details**:
+  - **SessionDashboard**: Tabbed interface (Players/Schedule/Stats) with responsive design
+  - **Player stats cards**: 4-card grid showing total/active/playing/reffing counts with color coding
+  - **Schedule display**: Big Toss cards with games, status badges, delete functionality
+  - **UI improvements**: Orange/pink gradient theme, Bungee Inline font for logo, mobile-first design
+  - **Empty states**: Helpful icons and messages when no data exists
+  - **Tab navigation**: Pill-style tabs with count badges, smooth transitions
 
 ### US-003 Manage players in Session ✅ DONE
 As an organizer, I want to add or remove players from the Session.
@@ -58,9 +69,17 @@ As an organizer, I want to add or remove players from the Session.
   - Persist changes to localStorage immediately
 - Implementation Notes
   - Show error message on duplicate names
-- **Implementation**: PlayerList component with inline add player input, toggle availability, remove with confirmation, mobile-optimized design
+- **Implementation Details**:
+  - **PlayerList component**: Integrated into Players tab with inline add player functionality
+  - **Add player**: Input field at top of roster with small "Add" button, Enter key support
+  - **Player management**: Toggle availability (green/gray circles), remove with confirmation dialog
+  - **Validation**: Duplicate name prevention (case-insensitive), empty name handling
+  - **Auto-regeneration**: Adding/removing players automatically updates scheduled Big Toss
+  - **Visual indicators**: Status badges (Available/Unavailable/Inactive), join dates
+  - **Error handling**: Inline error messages for validation failures
+  - **Mobile optimization**: Responsive layout, compact buttons, proper touch targets
 
-### US-004 Start a Big Toss
+### US-004 Start a Big Toss ✅ DONE
 As an organizer, I want to generate a Big Toss cycle of Games from the current player list.
 
 - Acceptance Criteria
@@ -73,6 +92,20 @@ As an organizer, I want to generate a Big Toss cycle of Games from the current p
 - Implementation Notes
   - BigToss shape: { id, index, createdAt, games: [Game], status: 'scheduled' }
   - Decide N: floor(totalPlayers / 6) minimum 1; extra players become bench for Filled Game logic
+- **Implementation Details**:
+  - **SessionToolbar**: Added "Generate Big Toss" button with conditional display (only shows when session exists)
+  - **Smart validation**: Button disabled when < 6 eligible players, shows tooltip with current count
+  - **Visual feedback**: Green gradient when enabled, gray when disabled, lightning bolt icon
+  - **Auto-regeneration**: When adding/removing players, existing scheduled Big Toss automatically recalculates
+  - **Delete functionality**: Each Big Toss has trash icon with confirmation dialog
+  - **Sequential numbering**: Fixed display numbering to use array position instead of stored index
+  - **Core integration**: Uses existing `generateGames()` and `assignRefsToGames()` algorithms
+  - **Error handling**: Alert messages for insufficient players, graceful failure handling
+  - **Persistence**: All changes automatically saved to localStorage
+  - **Mobile responsive**: Button text adapts ("Generate Big Toss" → "Big Toss" on mobile)
+- **Storage versioning**: Added localStorage version check (STORAGE_VERSION=2); shows a modal on mismatch and clears storage on user acknowledge
+- **User notice modal**: Warns about data format update with "I understand" action to clear outdated data
+- **Developer note**: When changing the saved data format in future development, update STORAGE_VERSION in `src/utils/localStorage.ts`
 
 ### US-005 Compose Games (team building)
 As an organizer, I want each Game to have two teams of 3 players.

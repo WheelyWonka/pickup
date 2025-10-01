@@ -7,12 +7,13 @@ import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import type { Session, Player, BigToss } from '../types/models';
 import { createNewSession, createNewPlayer, generateGames, assignRefsToGames } from '../core';
-import { saveSession, loadSession, clearSession, generateId } from '../utils';
+import { saveSession, loadSession, clearSession, generateId, getStoredDataVersion, STORAGE_VERSION } from '../utils';
 
 interface SessionState {
   session: Session | null;
   isLoading: boolean;
   error: string | null;
+  showVersionModal: boolean;
 }
 
 type SessionAction =
@@ -25,7 +26,9 @@ type SessionAction =
   | { type: 'GENERATE_BIG_TOSS' }
   | { type: 'DELETE_BIG_TOSS'; payload: string }
   | { type: 'SET_ERROR'; payload: string }
-  | { type: 'CLEAR_ERROR' };
+  | { type: 'CLEAR_ERROR' }
+  | { type: 'SHOW_VERSION_MODAL' }
+  | { type: 'HIDE_VERSION_MODAL' };
 
 interface SessionContextType {
   state: SessionState;
@@ -36,6 +39,7 @@ interface SessionContextType {
   togglePlayerAvailability: (playerId: string) => void;
   generateBigToss: () => void;
   deleteBigToss: (bigTossId: string) => void;
+  acknowledgeVersionMismatch: () => void;
 }
 
 const SessionContext = createContext<SessionContextType | undefined>(undefined);
@@ -254,6 +258,12 @@ const sessionReducer = (state: SessionState, action: SessionAction): SessionStat
     case 'CLEAR_ERROR':
       return { ...state, error: null };
 
+    case 'SHOW_VERSION_MODAL':
+      return { ...state, showVersionModal: true };
+
+    case 'HIDE_VERSION_MODAL':
+      return { ...state, showVersionModal: false };
+
     default:
       return state;
   }
@@ -264,10 +274,19 @@ export const SessionProvider: React.FC<{ children: ReactNode }> = ({ children })
     session: null,
     isLoading: true,
     error: null,
+    showVersionModal: false,
   });
 
   // Load session from localStorage on mount
   useEffect(() => {
+    const storedVersion = getStoredDataVersion();
+    if (storedVersion !== null && storedVersion !== STORAGE_VERSION) {
+      // show modal; do not load incompatible data
+      dispatch({ type: 'SHOW_VERSION_MODAL' });
+      dispatch({ type: 'LOAD_SESSION', payload: null });
+      return;
+    }
+
     const savedSession = loadSession();
     dispatch({ type: 'LOAD_SESSION', payload: savedSession });
   }, []);
@@ -282,6 +301,10 @@ export const SessionProvider: React.FC<{ children: ReactNode }> = ({ children })
       dispatch({ type: 'TOGGLE_PLAYER_AVAILABILITY', payload: playerId }),
     generateBigToss: () => dispatch({ type: 'GENERATE_BIG_TOSS' }),
     deleteBigToss: (bigTossId: string) => dispatch({ type: 'DELETE_BIG_TOSS', payload: bigTossId }),
+    acknowledgeVersionMismatch: () => {
+      clearSession();
+      dispatch({ type: 'HIDE_VERSION_MODAL' });
+    },
   };
 
   return <SessionContext.Provider value={contextValue}>{children}</SessionContext.Provider>;
