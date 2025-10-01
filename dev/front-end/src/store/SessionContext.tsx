@@ -3,7 +3,8 @@
  * Provides session state and actions to the entire app
  */
 
-import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import type { ReactNode } from 'react';
 import type { Session, Player, BigToss } from '../types/models';
 import { createNewSession, createNewPlayer, generateGames, assignRefsToGames } from '../core';
 import { saveSession, loadSession, clearSession, generateId } from '../utils';
@@ -22,6 +23,7 @@ type SessionAction =
   | { type: 'REMOVE_PLAYER'; payload: string }
   | { type: 'TOGGLE_PLAYER_AVAILABILITY'; payload: string }
   | { type: 'GENERATE_BIG_TOSS' }
+  | { type: 'DELETE_BIG_TOSS'; payload: string }
   | { type: 'SET_ERROR'; payload: string }
   | { type: 'CLEAR_ERROR' };
 
@@ -33,6 +35,7 @@ interface SessionContextType {
   removePlayer: (playerId: string) => void;
   togglePlayerAvailability: (playerId: string) => void;
   generateBigToss: () => void;
+  deleteBigToss: (bigTossId: string) => void;
 }
 
 const SessionContext = createContext<SessionContextType | undefined>(undefined);
@@ -82,10 +85,40 @@ const sessionReducer = (state: SessionState, action: SessionAction): SessionStat
       }
 
       const newPlayer = createNewPlayer(name);
-      const updatedSession = {
+      let updatedSession = {
         ...state.session,
         players: [...state.session.players, newPlayer],
       };
+
+      // If there is a currently scheduled Big Toss, regenerate it to include new players
+      if (updatedSession.bigTosses.length > 0) {
+        let scheduledIndex = -1;
+        for (let i = updatedSession.bigTosses.length - 1; i >= 0; i--) {
+          if (updatedSession.bigTosses[i].status === 'scheduled') {
+            scheduledIndex = i;
+            break;
+          }
+        }
+
+        if (scheduledIndex >= 0) {
+          const existing = updatedSession.bigTosses[scheduledIndex];
+          try {
+            let games = generateGames({
+              players: updatedSession.players,
+              bigTossId: existing.id,
+              startIndex: 0,
+            });
+            games = assignRefsToGames(games, updatedSession.players);
+
+            const regenerated = { ...existing, games };
+            const newBigTosses = [...updatedSession.bigTosses];
+            newBigTosses[scheduledIndex] = regenerated;
+            updatedSession = { ...updatedSession, bigTosses: newBigTosses };
+          } catch (e) {
+            // If generation fails (e.g., < 6 players), ignore regeneration
+          }
+        }
+      }
 
       saveSession(updatedSession);
       return {
@@ -98,10 +131,42 @@ const sessionReducer = (state: SessionState, action: SessionAction): SessionStat
     case 'REMOVE_PLAYER': {
       if (!state.session) return state;
 
-      const updatedSession = {
+      let updatedSession = {
         ...state.session,
         players: state.session.players.filter(p => p.id !== action.payload),
       };
+
+      // If there is a currently scheduled Big Toss, regenerate it after removal
+      if (updatedSession.bigTosses.length > 0) {
+        let scheduledIndex = -1;
+        for (let i = updatedSession.bigTosses.length - 1; i >= 0; i--) {
+          if (updatedSession.bigTosses[i].status === 'scheduled') {
+            scheduledIndex = i;
+            break;
+          }
+        }
+
+        if (scheduledIndex >= 0) {
+          const existing = updatedSession.bigTosses[scheduledIndex];
+          try {
+            let games = generateGames({
+              players: updatedSession.players,
+              bigTossId: existing.id,
+              startIndex: 0,
+            });
+            games = assignRefsToGames(games, updatedSession.players);
+
+            const regenerated = { ...existing, games };
+            const newBigTosses = [...updatedSession.bigTosses];
+            newBigTosses[scheduledIndex] = regenerated;
+            updatedSession = { ...updatedSession, bigTosses: newBigTosses };
+          } catch (e) {
+            // If generation fails (e.g., < 6 players), remove the scheduled Big Toss as it is no longer valid
+            const newBigTosses = updatedSession.bigTosses.filter((_, idx) => idx !== scheduledIndex);
+            updatedSession = { ...updatedSession, bigTosses: newBigTosses };
+          }
+        }
+      }
 
       saveSession(updatedSession);
       return {
@@ -134,6 +199,7 @@ const sessionReducer = (state: SessionState, action: SessionAction): SessionStat
 
       try {
         const bigTossId = generateId();
+        // Use the current length as the index to ensure sequential numbering
         const bigTossIndex = state.session.bigTosses.length;
 
         // Generate games with team assignments
@@ -173,6 +239,15 @@ const sessionReducer = (state: SessionState, action: SessionAction): SessionStat
       }
     }
 
+    case 'DELETE_BIG_TOSS': {
+      if (!state.session) return state;
+      const bigTossId = action.payload;
+      const filtered = state.session.bigTosses.filter(bt => bt.id !== bigTossId);
+      const updatedSession = { ...state.session, bigTosses: filtered };
+      saveSession(updatedSession);
+      return { ...state, session: updatedSession, error: null };
+    }
+
     case 'SET_ERROR':
       return { ...state, error: action.payload };
 
@@ -206,6 +281,7 @@ export const SessionProvider: React.FC<{ children: ReactNode }> = ({ children })
     togglePlayerAvailability: (playerId: string) =>
       dispatch({ type: 'TOGGLE_PLAYER_AVAILABILITY', payload: playerId }),
     generateBigToss: () => dispatch({ type: 'GENERATE_BIG_TOSS' }),
+    deleteBigToss: (bigTossId: string) => dispatch({ type: 'DELETE_BIG_TOSS', payload: bigTossId }),
   };
 
   return <SessionContext.Provider value={contextValue}>{children}</SessionContext.Provider>;

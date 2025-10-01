@@ -48,7 +48,7 @@ As an organizer, I want a dashboard to see players, schedule, and stats.
   - Provide tabs: Players | Schedule | Stats
 - **Implementation**: SessionDashboard component with responsive tabs, player stats cards, Big Toss display, mobile-optimized design with Bungee Inline font logo
 
-### US-003 Manage players in Session
+### US-003 Manage players in Session ✅ DONE
 As an organizer, I want to add or remove players from the Session.
 
 - Acceptance Criteria
@@ -58,6 +58,7 @@ As an organizer, I want to add or remove players from the Session.
   - Persist changes to localStorage immediately
 - Implementation Notes
   - Show error message on duplicate names
+- **Implementation**: PlayerList component with inline add player input, toggle availability, remove with confirmation, mobile-optimized design
 
 ### US-004 Start a Big Toss
 As an organizer, I want to generate a Big Toss cycle of Games from the current player list.
