@@ -450,8 +450,8 @@ As a participant, I want to see fair distribution of play time and reffing.
     - Balance metric per game (heuristic, e.g., variance of cumulative session play)
   - Fairness/outliers
     - Most underplayed (low Reserved count vs session mean)
-    - Most over-bonus (high Bonus vs session mean)
-    - Most over-ref (high ref assignments vs session mean)
+    - Most bonus (high Bonus vs session mean)
+    - Most ref (high ref assignments vs session mean)
   - Filters and sorts
     - Filter by availability and active/inactive
     - Sort by games played, Bonus count, ref load, last played/refed, fairness indicator
