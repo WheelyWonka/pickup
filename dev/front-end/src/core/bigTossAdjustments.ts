@@ -1,56 +1,10 @@
 import type { BigToss, Game, Player, TeamSlot } from '../types/models';
 import { generateId } from '../utils';
+import { isPlayerEligible, countBigTossGamesPerPlayer, choosePlayersForBonus } from './fairness';
 
 interface AdjustmentResult {
   bigToss: BigToss;
   players: Player[];
-}
-
-function isEligible(player: Player): boolean {
-  return player.active && player.available;
-}
-
-function countBigTossGamesPerPlayer(games: Game[]): Map<string, number> {
-  const counts = new Map<string, number>();
-  games.forEach(game => {
-    const allSlots: TeamSlot[] = [...game.teams.teamA, ...game.teams.teamB];
-    allSlots.forEach(slot => {
-      counts.set(slot.playerId, (counts.get(slot.playerId) ?? 0) + 1);
-    });
-  });
-  return counts;
-}
-
-function chooseBonusByFairness(
-  candidates: Player[],
-  count: number,
-  currentBigTossGamesCount: Map<string, number>
-): Player[] {
-  const sorted = [...candidates].sort((a, b) => {
-    // 1) fewest session bonus slots used
-    const aBonus = a.sessionStats.bonusSlotsUsed;
-    const bBonus = b.sessionStats.bonusSlotsUsed;
-    if (aBonus !== bBonus) return aBonus - bBonus;
-
-    // 2) fewest games in current Big Toss
-    const aBT = currentBigTossGamesCount.get(a.id) ?? 0;
-    const bBT = currentBigTossGamesCount.get(b.id) ?? 0;
-    if (aBT !== bBT) return aBT - bBT;
-
-    // 3) earliest lastPlayedAt (null treated as 0)
-    const aLP = a.sessionStats.lastPlayedAt ?? 0;
-    const bLP = b.sessionStats.lastPlayedAt ?? 0;
-    if (aLP !== bLP) return aLP - bLP;
-
-    // 4) if both have no lastPlayedAt, use joinedAt
-    if ((a.sessionStats.lastPlayedAt ?? null) === null && (b.sessionStats.lastPlayedAt ?? null) === null) {
-      if (a.joinedAt !== b.joinedAt) return a.joinedAt - b.joinedAt;
-    }
-
-    // 5) alphabetical
-    return a.name.localeCompare(b.name);
-  });
-  return sorted.slice(0, count);
 }
 
 function chooseDisplacementCandidate(
@@ -101,7 +55,7 @@ function makeEmptyGame(bigTossId: string, index: number): Game {
 
 export function addPlayerToBigToss(bigToss: BigToss, players: Player[], newPlayerId: string): AdjustmentResult {
   const playersById = new Map(players.map(p => [p.id, p] as const));
-  const eligible = players.filter(isEligible);
+  const eligible = players.filter(isPlayerEligible);
   const neededGames = Math.ceil(eligible.length / 6);
 
   const currentGames = bigToss.games.map(g => ({ ...g, teams: { teamA: [...g.teams.teamA], teamB: [...g.teams.teamB] } }));
@@ -122,7 +76,7 @@ export function addPlayerToBigToss(bigToss: BigToss, players: Player[], newPlaye
     g.teams.teamA.push({ playerId: newPlayerId, slotType: 'reserved' });
 
     const candidatePlayers = eligible.filter(p => p.id !== newPlayerId);
-    const chosen = chooseBonusByFairness(candidatePlayers, 5, btCount);
+    const chosen = choosePlayersForBonus(candidatePlayers, 5, btCount);
     const chosenSlots: TeamSlot[] = chosen.map(p => ({ playerId: p.id, slotType: 'bonus' }));
 
     chosenSlots.forEach(slot => {
@@ -250,7 +204,7 @@ export function removePlayerFromBigToss(bigToss: BigToss, players: Player[], rem
       const target = games[vacatedGameIndex];
       const slotsInTarget: TeamSlot[] = [...target.teams.teamA, ...target.teams.teamB];
       const inTargetIds = new Set<string>(slotsInTarget.map((s: TeamSlot) => s.playerId));
-      const candidates = updatedPlayers.filter(p => isEligible(p) && !inTargetIds.has(p.id));
+      const candidates = updatedPlayers.filter(p => isPlayerEligible(p) && !inTargetIds.has(p.id));
 
       // Build set of players who already have a Reserved slot in this Big Toss
       const reservedIds = new Set<string>();
@@ -263,9 +217,9 @@ export function removePlayerFromBigToss(bigToss: BigToss, players: Player[], rem
       const candidatesWithoutReserved = candidates.filter(p => !reservedIds.has(p.id));
       let chosen: Player | undefined;
       if (candidatesWithoutReserved.length > 0) {
-        chosen = chooseBonusByFairness(candidatesWithoutReserved, 1, btCount)[0];
+        chosen = choosePlayersForBonus(candidatesWithoutReserved, 1, btCount)[0];
       } else {
-        chosen = chooseBonusByFairness(candidates, 1, btCount)[0];
+        chosen = choosePlayersForBonus(candidates, 1, btCount)[0];
       }
 
       if (chosen) {
@@ -295,8 +249,8 @@ export function removePlayerFromBigToss(bigToss: BigToss, players: Player[], rem
     const target = games[vacatedGameIndex];
     const slotsInTarget: TeamSlot[] = [...target.teams.teamA, ...target.teams.teamB];
     const inTargetIds = new Set<string>(slotsInTarget.map((s: TeamSlot) => s.playerId));
-    const candidates = updatedPlayers.filter(p => isEligible(p) && !inTargetIds.has(p.id));
-    const chosen = chooseBonusByFairness(candidates, 1, btCount)[0];
+    const candidates = updatedPlayers.filter(p => isPlayerEligible(p) && !inTargetIds.has(p.id));
+    const chosen = choosePlayersForBonus(candidates, 1, btCount)[0];
     if (chosen) {
       const slot: TeamSlot = { playerId: chosen.id, slotType: 'bonus' };
       if (target.teams.teamA.length < 3) target.teams.teamA.push(slot);

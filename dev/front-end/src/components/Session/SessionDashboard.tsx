@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useSession } from '../../store/SessionContext';
 import PlayerList from '../Player/PlayerList';
 import StatsView from '../Stats/StatsView';
+import BigTossCard from '../Schedule/BigTossCard';
 
 type TabType = 'players' | 'schedule' | 'stats';
 
@@ -51,38 +52,6 @@ const SessionDashboard: React.FC = () => {
     </div>
   );
 
-  const getPlayerName = (playerId: string): string => {
-    const p = session.players.find(pp => pp.id === playerId);
-    return p ? p.name : 'Unknown';
-  };
-
-  const renderTeamColumn = (title: string, slots: { playerId: string; slotType: 'reserved' | 'bonus' }[]) => (
-    <div className="flex-1">
-      <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{title}</div>
-      <div className="space-y-2">
-        {slots.map((slot, idx) => (
-          <div key={`${slot.playerId}-${idx}`} className="flex items-center justify-between bg-white/60 border border-gray-200 rounded-lg px-3 py-2">
-            <div className="font-medium text-gray-800 truncate">{getPlayerName(slot.playerId)}</div>
-            <span className={`text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full font-bold ${slot.slotType === 'reserved' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
-              {slot.slotType}
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-
-  const renderRefs = (mainId: string | null, assistantId: string | null) => {
-    const mainName = mainId ? getPlayerName(mainId) : 'Needs ref';
-    const asstName = assistantId ? getPlayerName(assistantId) : 'Needs ref';
-    return (
-      <div className="flex items-center gap-3 text-xs text-gray-600">
-        <span className="inline-flex items-center gap-1"><span className="w-2 h-2 bg-blue-400 rounded-full"></span>Main: <span className={`font-medium ${mainId ? '' : 'text-red-600'}`}>{mainName}</span></span>
-        <span className="inline-flex items-center gap-1"><span className="w-2 h-2 bg-indigo-400 rounded-full"></span>Asst: <span className={`font-medium ${assistantId ? '' : 'text-red-600'}`}>{asstName}</span></span>
-      </div>
-    );
-  };
-
   const renderScheduleTab = () => (
     <div className="space-y-6">
       {session.bigTosses.length === 0 ? (
@@ -97,72 +66,13 @@ const SessionDashboard: React.FC = () => {
         </div>
       ) : (
         session.bigTosses.map((bigToss, bigTossArrayIndex) => (
-          <div key={bigToss.id} className="bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden">
-            <div className="px-6 py-4 border-b bg-gradient-to-r from-pink-50 to-orange-50">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <h3 className="font-semibold text-gray-900 text-lg">Big Toss #{bigTossArrayIndex + 1}</h3>
-                  <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-800">{bigToss.status}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="hidden sm:block text-sm text-gray-600 bg-white px-3 py-1 rounded-full">
-                    {new Date(bigToss.createdAt).toLocaleString()}
-                  </div>
-                  <button
-                    onClick={() => {
-                      if (confirm('Delete this Big Toss? This cannot be undone.')) {
-                        deleteBigToss(bigToss.id);
-                      }
-                    }}
-                    className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg"
-                    aria-label="Delete Big Toss"
-                    title="Delete Big Toss"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-            <div className="p-6">
-              <div className="grid gap-4">
-                {bigToss.games.map((game) => (
-                  <div key={game.id} className="p-4 bg-gradient-to-r from-gray-50 to-orange-50 rounded-xl border border-gray-100 hover:shadow-md transition-shadow">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <div className={`px-3 py-1 text-xs font-semibold rounded-full ${
-                          game.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
-                          game.status === 'playing' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-green-100 text-green-800'
-                        }`}>
-                          {game.status}
-                        </div>
-                        <span className="font-semibold text-gray-900">Game #{game.index + 1}</span>
-                        {game.isToFill && (
-                          <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full font-medium">
-                            To Fill
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-sm text-gray-600 font-medium">
-                        {game.teams.teamA.length + game.teams.teamB.length} players
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col sm:flex-row gap-4">
-                      {renderTeamColumn('Team A', game.teams.teamA)}
-                      {renderTeamColumn('Team B', game.teams.teamB)}
-                    </div>
-
-                    <div className="mt-4 border-t pt-3 flex items-center justify-between">
-                      {renderRefs(game.refs.mainId, game.refs.assistantId)}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+          <BigTossCard
+            key={bigToss.id}
+            bigToss={bigToss}
+            arrayIndex={bigTossArrayIndex}
+            players={session.players}
+            onDelete={deleteBigToss}
+          />
         ))
       )}
     </div>

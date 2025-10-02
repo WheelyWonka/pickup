@@ -6,5 +6,6 @@ export * from './sessionFactory';
 export * from './teamGenerator';
 export * from './refSelector';
 export * from './bigTossAdjustments';
+export * from './fairness';
 
 

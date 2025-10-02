@@ -5,6 +5,7 @@
 
 import type { Player, Game, TeamSlot } from '../types/models';
 import { shuffle, generateId } from '../utils';
+import { isPlayerEligible, choosePlayersForBonus } from './fairness';
 
 export interface GenerateGamesOptions {
   players: Player[];
@@ -25,38 +26,10 @@ function splitIntoTeams(sixSlots: TeamSlot[]): { teamA: TeamSlot[]; teamB: TeamS
   };
 }
 
-function chooseBonusOccupantsByFairness(
-  candidates: Player[],
-  count: number,
-  currentBigTossGamesCount: Map<string, number>
-): Player[] {
-  const sorted = [...candidates].sort((a, b) => {
-    const aBonus = a.sessionStats.bonusSlotsUsed;
-    const bBonus = b.sessionStats.bonusSlotsUsed;
-    if (aBonus !== bBonus) return aBonus - bBonus;
-
-    const aBT = currentBigTossGamesCount.get(a.id) ?? 0;
-    const bBT = currentBigTossGamesCount.get(b.id) ?? 0;
-    if (aBT !== bBT) return aBT - bBT;
-
-    const aLP = a.sessionStats.lastPlayedAt ?? 0;
-    const bLP = b.sessionStats.lastPlayedAt ?? 0;
-    if (aLP !== bLP) return aLP - bLP;
-
-    if ((a.sessionStats.lastPlayedAt ?? null) === null && (b.sessionStats.lastPlayedAt ?? null) === null) {
-      if (a.joinedAt !== b.joinedAt) return a.joinedAt - b.joinedAt;
-    }
-
-    return a.name.localeCompare(b.name);
-  });
-
-  return sorted.slice(0, count);
-}
-
 export const generateGames = (options: GenerateGamesOptions): GenerateResult => {
   const { players, bigTossId, startIndex = 0, shufflePlayers = true } = options;
   
-  const eligiblePlayers = players.filter(p => p.active && p.available);
+  const eligiblePlayers = players.filter(isPlayerEligible);
   
   if (eligiblePlayers.length < 6) {
     throw new Error('At least 6 players required to generate games');
@@ -97,7 +70,7 @@ export const generateGames = (options: GenerateGamesOptions): GenerateResult => 
       reservedIds.forEach(pid => candidateIds.delete(pid));
       const candidates = players.filter(p => candidateIds.has(p.id));
 
-      const chosenBonus = chooseBonusOccupantsByFairness(candidates, bonusNeeded, currentBigTossGamesCount);
+      const chosenBonus = choosePlayersForBonus(candidates, bonusNeeded, currentBigTossGamesCount);
       chosenBonus.forEach(player => {
         slots.push({ playerId: player.id, slotType: 'bonus' });
       });

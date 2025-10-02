@@ -50,7 +50,7 @@ export interface PerPlayerSessionRow {
   lastRefedAt: number | null;
   benchWait: number;
   consecutiveGamesPlayed: number;
-  fairnessIndicator: 'underplayed' | 'balanced' | 'over-bonus' | 'over-ref';
+  fairnessIndicator: 'underplayed' | 'balanced' | 'bonus' | 'ref';
 }
 
 export function selectPerPlayerSessionStats(session: Session): PerPlayerSessionRow[] {
@@ -103,7 +103,7 @@ export function selectPerPlayerSessionStats(session: Session): PerPlayerSessionR
     const refsAssistantAssigned = allGames.filter(g => g.refs.assistantId === p.id).length;
     const fairnessIndicator: PerPlayerSessionRow['fairnessIndicator'] =
       gameCounts.reserved < medianReserved ? 'underplayed' :
-      (gameCounts.bonus > medianBonus ? 'over-bonus' : (refsAssigned > medianRefs ? 'over-ref' : 'balanced'));
+      (gameCounts.bonus > medianBonus ? 'bonus' : (refsAssigned > medianRefs ? 'ref' : 'balanced'));
 
     const lastIdx = lastAppearanceIndex.get(p.id);
     const benchWait = lastIdx == null ? btGames.length : Math.max(0, (btGames.length - 1) - lastIdx);
