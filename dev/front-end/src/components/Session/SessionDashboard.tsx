@@ -14,33 +14,57 @@ const SessionDashboard: React.FC = () => {
   const [touchDraggedItem, setTouchDraggedItem] = useState<DragData | null>(null);
   const [touchDragOverTarget, setTouchDragOverTarget] = useState<{ gameId: string; teamType: 'teamA' | 'teamB'; slotIndex: number } | null>(null);
   const [touchDragPosition, setTouchDragPosition] = useState<{ x: number; y: number } | null>(null);
+  const [isHoldingDragHandle, setIsHoldingDragHandle] = useState(false);
   const session = state.session;
 
   // Add document-level touch event listeners for better touch tracking
   useEffect(() => {
     const handleDocumentTouchMove = (e: TouchEvent) => {
-      if (touchDraggedItem && e.touches.length > 0) {
-        const touch = e.touches[0];
-        setTouchDragPosition({ x: touch.pageX, y: touch.pageY });
-        
-        const element = document.elementFromPoint(touch.clientX, touch.clientY);
-        const dropTarget = element?.closest('[data-drop-target]') as HTMLElement;
-        
-        if (dropTarget) {
-          const gameId = dropTarget.dataset.gameId;
-          const teamType = dropTarget.dataset.teamType as 'teamA' | 'teamB';
-          const slotIndex = parseInt(dropTarget.dataset.slotIndex || '0');
-          
-          if (gameId && teamType !== undefined && !isNaN(slotIndex)) {
-            setTouchDragOverTarget({ gameId, teamType, slotIndex });
-          }
-        } else {
-          setTouchDragOverTarget(null);
-        }
-        
+      // Block page scroll when holding drag handle or dragging
+      if ((isHoldingDragHandle || touchDraggedItem) && e.touches.length > 0) {
         e.preventDefault();
+        e.stopPropagation();
+        
+        // Handle drag movement
+        if (touchDraggedItem) {
+          const touch = e.touches[0];
+          setTouchDragPosition({ x: touch.pageX, y: touch.pageY });
+          
+          const element = document.elementFromPoint(touch.clientX, touch.clientY);
+          const dropTarget = element?.closest('[data-drop-target]') as HTMLElement;
+          
+          if (dropTarget) {
+            const gameId = dropTarget.dataset.gameId;
+            const teamType = dropTarget.dataset.teamType as 'teamA' | 'teamB';
+            const slotIndex = parseInt(dropTarget.dataset.slotIndex || '0');
+            
+            if (gameId && teamType !== undefined && !isNaN(slotIndex)) {
+              setTouchDragOverTarget({ gameId, teamType, slotIndex });
+            }
+          } else {
+            setTouchDragOverTarget(null);
+          }
+        }
       }
     };
+
+    // Disable page scrolling during drag operations
+    const disablePageScroll = () => {
+      document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
+    };
+
+    const enablePageScroll = () => {
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+    };
+
+    // Disable scrolling when holding drag handle or dragging
+    if (isHoldingDragHandle || touchDraggedItem) {
+      disablePageScroll();
+    } else {
+      enablePageScroll();
+    }
 
     const handleDocumentTouchEnd = (e: TouchEvent) => {
       if (touchDraggedItem) {
@@ -53,7 +77,9 @@ const SessionDashboard: React.FC = () => {
           setTouchDraggedItem(null);
           setTouchDragOverTarget(null);
           setTouchDragPosition(null);
+          setIsHoldingDragHandle(false);
           e.preventDefault();
+          e.stopPropagation();
           return;
         }
         
@@ -70,7 +96,9 @@ const SessionDashboard: React.FC = () => {
           setTouchDraggedItem(null);
           setTouchDragOverTarget(null);
           setTouchDragPosition(null);
+          setIsHoldingDragHandle(false);
           e.preventDefault();
+          e.stopPropagation();
           return;
         }
         
@@ -83,7 +111,9 @@ const SessionDashboard: React.FC = () => {
           setTouchDraggedItem(null);
           setTouchDragOverTarget(null);
           setTouchDragPosition(null);
+          setIsHoldingDragHandle(false);
           e.preventDefault();
+          e.stopPropagation();
           return;
         }
         
@@ -100,7 +130,9 @@ const SessionDashboard: React.FC = () => {
           setTouchDraggedItem(null);
           setTouchDragOverTarget(null);
           setTouchDragPosition(null);
+          setIsHoldingDragHandle(false);
           e.preventDefault();
+          e.stopPropagation();
           return;
         }
         
@@ -151,11 +183,13 @@ const SessionDashboard: React.FC = () => {
         setTouchDraggedItem(null);
         setTouchDragOverTarget(null);
         setTouchDragPosition(null);
+        setIsHoldingDragHandle(false);
         e.preventDefault();
+        e.stopPropagation();
       }
     };
 
-    if (touchDraggedItem) {
+    if (touchDraggedItem || isHoldingDragHandle) {
       document.addEventListener('touchmove', handleDocumentTouchMove, { passive: false });
       document.addEventListener('touchend', handleDocumentTouchEnd, { passive: false });
     }
@@ -163,8 +197,11 @@ const SessionDashboard: React.FC = () => {
     return () => {
       document.removeEventListener('touchmove', handleDocumentTouchMove);
       document.removeEventListener('touchend', handleDocumentTouchEnd);
+      // Re-enable page scrolling when component unmounts or effect cleans up
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
     };
-  }, [touchDraggedItem, touchDragOverTarget, session, updateGameTeams]);
+  }, [touchDraggedItem, touchDragOverTarget, isHoldingDragHandle, session, updateGameTeams]);
 
   if (!session) {
     return null;
@@ -221,8 +258,8 @@ const SessionDashboard: React.FC = () => {
       <div
         className="fixed pointer-events-none z-50 opacity-75"
         style={{
-          left: touchDragPosition.x - 75, // Center horizontally (half of card width)
-          top: touchDragPosition.y - 200,  // Center vertically (reduced offset)
+          left: touchDragPosition.x - 200, // Center horizontally (half of card width)
+          top: touchDragPosition.y - 250,  // Center vertically (reduced offset)
         }}
       >
         <div className="flex items-center justify-between bg-white/80 backdrop-blur-sm border border-orange-200/30 rounded-lg px-3 py-2 shadow-sm w-[150px]">
@@ -261,6 +298,14 @@ const SessionDashboard: React.FC = () => {
     const touch = e.touches[0];
     setTouchDraggedItem(data);
     setTouchDragPosition({ x: touch.pageX, y: touch.pageY });
+  };
+
+  const handleTouchHoldStart = () => {
+    setIsHoldingDragHandle(true);
+  };
+
+  const handleTouchHoldEnd = () => {
+    setIsHoldingDragHandle(false);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -451,11 +496,21 @@ const SessionDashboard: React.FC = () => {
                 gameId={gameId}
                 teamType={teamType}
                 slotIndex={idx}
+                isBeingDragged={
+                  (touchDraggedItem?.gameId === gameId && 
+                   touchDraggedItem?.teamType === teamType && 
+                   touchDraggedItem?.slotIndex === idx) ||
+                  (draggedItem?.gameId === gameId && 
+                   draggedItem?.teamType === teamType && 
+                   draggedItem?.slotIndex === idx)
+                }
                 onDragStart={handleDragStart}
                 onDragEnd={handleDragEnd}
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
+                onTouchHoldStart={handleTouchHoldStart}
+                onTouchHoldEnd={handleTouchHoldEnd}
               />
             </div>
           );

@@ -7,11 +7,14 @@ interface DraggablePlayerSlotProps {
   gameId: string;
   teamType: 'teamA' | 'teamB';
   slotIndex: number;
+  isBeingDragged?: boolean;
   onDragStart: (e: React.DragEvent, data: DragData) => void;
   onDragEnd: (e: React.DragEvent) => void;
   onTouchStart?: (e: React.TouchEvent, data: DragData) => void;
   onTouchMove?: (e: React.TouchEvent) => void;
   onTouchEnd?: (e: React.TouchEvent) => void;
+  onTouchHoldStart?: () => void;
+  onTouchHoldEnd?: () => void;
 }
 
 export interface DragData {
@@ -28,17 +31,21 @@ const DraggablePlayerSlot: React.FC<DraggablePlayerSlotProps> = ({
   gameId,
   teamType,
   slotIndex,
+  isBeingDragged = false,
   onDragStart,
   onDragEnd,
   onTouchStart,
   onTouchMove,
   onTouchEnd,
+  onTouchHoldStart,
+  onTouchHoldEnd,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
+  const [isHolding, setIsHolding] = useState(false);
   const touchStartPos = useRef<{ x: number; y: number } | null>(null);
-  const dragThreshold = 10; // Minimum distance to start drag
+  const dragThreshold = 5; // Minimum distance to start drag (reduced for more responsiveness)
   const touchStartTime = useRef<number | null>(null);
-  const dragDelay = 300; // Minimum time (ms) to hold before drag can start
+  const dragDelay = 200; // Minimum time (ms) to hold before drag can start (reduced)
 
   const dragData: DragData = {
     gameId,
@@ -53,6 +60,12 @@ const DraggablePlayerSlot: React.FC<DraggablePlayerSlotProps> = ({
     touchStartPos.current = { x: touch.clientX, y: touch.clientY };
     touchStartTime.current = Date.now();
     setIsDragging(false);
+    setIsHolding(true); // Immediately show holding feedback
+    
+    // Notify parent that we're holding the drag handle
+    if (onTouchHoldStart) {
+      onTouchHoldStart();
+    }
     
     // Don't call onTouchStart immediately - wait for delay
   };
@@ -65,27 +78,25 @@ const DraggablePlayerSlot: React.FC<DraggablePlayerSlotProps> = ({
     const deltaY = Math.abs(touch.clientY - touchStartPos.current.y);
     const timeSinceStart = Date.now() - touchStartTime.current;
     
-    // Only start dragging if:
-    // 1. Moved beyond threshold AND
-    // 2. Enough time has passed (drag delay) AND
-    // 3. Not already dragging
+    // If we're holding the drag handle, always prevent scrolling
+    if (isHolding) {
+      e.preventDefault();
+    }
+    
+    // Start dragging if we've moved enough and waited long enough
     if ((deltaX > dragThreshold || deltaY > dragThreshold) && 
         timeSinceStart >= dragDelay && 
         !isDragging) {
       setIsDragging(true);
       
-      // Now call onTouchStart to begin the drag process
       if (onTouchStart) {
         onTouchStart(e, dragData);
       }
-      
-      e.preventDefault(); // Prevent scrolling
     }
     
-    // Only call onTouchMove if we're actually dragging
+    // Handle drag movement
     if (isDragging && onTouchMove) {
       onTouchMove(e);
-      e.preventDefault(); // Prevent scrolling during drag
     }
   };
 
@@ -93,6 +104,12 @@ const DraggablePlayerSlot: React.FC<DraggablePlayerSlotProps> = ({
     touchStartPos.current = null;
     touchStartTime.current = null;
     setIsDragging(false);
+    setIsHolding(false); // Clear holding state
+    
+    // Notify parent that we're no longer holding the drag handle
+    if (onTouchHoldEnd) {
+      onTouchHoldEnd();
+    }
     
     if (onTouchEnd) {
       onTouchEnd(e);
@@ -102,7 +119,7 @@ const DraggablePlayerSlot: React.FC<DraggablePlayerSlotProps> = ({
   return (
     <div
       className={`flex items-center justify-between bg-white/80 backdrop-blur-sm border border-orange-200/30 rounded-lg px-3 py-2 shadow-sm hover:shadow-md transition-all duration-200 select-none ${
-        isDragging ? 'opacity-75 scale-105' : ''
+        isBeingDragged ? 'opacity-20' : isDragging ? 'opacity-75 scale-105' : isHolding ? 'opacity-90 scale-102 shadow-lg border-orange-300/50' : ''
       }`}
     >
       <div className="font-semibold text-gray-800 truncate flex-1 min-w-0">{playerName}</div>
@@ -122,7 +139,9 @@ const DraggablePlayerSlot: React.FC<DraggablePlayerSlotProps> = ({
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
-          className="flex flex-col gap-0.5 text-gray-300 hover:text-gray-500 transition-colors duration-200 flex-shrink-0 cursor-move p-1 -m-1"
+          className={`flex flex-col gap-0.5 transition-colors duration-200 flex-shrink-0 cursor-move p-1 -m-1 ${
+            isHolding ? 'text-orange-500 scale-110' : 'text-gray-300 hover:text-gray-500'
+          }`}
           style={{ touchAction: 'none' }} // Prevent default touch behaviors
           title="Drag to move player"
         >
