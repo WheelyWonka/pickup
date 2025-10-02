@@ -158,6 +158,16 @@ const HowToUseView: React.FC = () => {
               </svg>
               <p className="text-gray-700 text-sm">The system remembers your session data in the browser, so you can refresh the page without losing progress.</p>
             </div>
+            
+            <div className="flex items-start gap-3 p-3 bg-gradient-to-r from-indigo-50/80 to-blue-50/80 border border-indigo-200/30 rounded-lg">
+              <svg className="w-5 h-5 text-indigo-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+              </svg>
+              <div>
+                <p className="text-gray-700 text-sm font-semibold mb-1">Drag & Drop Team Adjustments</p>
+                <p className="text-gray-700 text-sm">Drag a player over another player to swap their positions, or drag to the end of a team to move them. Games with manual adjustments show a "Manual" badge.</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>

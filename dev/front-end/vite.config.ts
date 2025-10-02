@@ -9,4 +9,8 @@ export default defineConfig({
     outDir: 'dist',
     assetsDir: 'assets',
   },
+  server: {
+    host: true, // This allows external connections
+    port: 5173, // Default Vite port
+  },
 })

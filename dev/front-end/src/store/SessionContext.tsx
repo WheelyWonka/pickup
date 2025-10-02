@@ -5,7 +5,7 @@
 
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import type { ReactNode } from 'react';
-import type { Session, BigToss } from '../types/models';
+import type { Session, BigToss, TeamSlot } from '../types/models';
 import { createNewSession, createNewPlayer, generateGames, assignRefsToGames, addPlayerToBigToss, removePlayerFromBigToss } from '../core';
 import { saveSession, loadSession, clearSession, generateId, getStoredDataVersion, STORAGE_VERSION } from '../utils';
 
@@ -25,6 +25,7 @@ type SessionAction =
   | { type: 'TOGGLE_PLAYER_AVAILABILITY'; payload: string }
   | { type: 'GENERATE_BIG_TOSS' }
   | { type: 'DELETE_BIG_TOSS'; payload: string }
+  | { type: 'UPDATE_GAME_TEAMS'; payload: { gameId: string; teams: { teamA: TeamSlot[]; teamB: TeamSlot[] } } }
   | { type: 'SET_ERROR'; payload: string }
   | { type: 'CLEAR_ERROR' }
   | { type: 'SHOW_VERSION_MODAL' }
@@ -39,6 +40,7 @@ interface SessionContextType {
   togglePlayerAvailability: (playerId: string) => void;
   generateBigToss: () => void;
   deleteBigToss: (bigTossId: string) => void;
+  updateGameTeams: (gameId: string, teams: { teamA: TeamSlot[]; teamB: TeamSlot[] }) => void;
   acknowledgeVersionMismatch: () => void;
 }
 
@@ -116,7 +118,7 @@ const sessionReducer = (state: SessionState, action: SessionAction): SessionStat
             const newBigTosses = [...updatedSession.bigTosses];
             newBigTosses[scheduledIndex] = regenerated;
             updatedSession = { ...updatedSession, bigTosses: newBigTosses, players: adj.players };
-          } catch (e) {
+          } catch {
             // ignore if adjustment fails
           }
         }
@@ -160,7 +162,7 @@ const sessionReducer = (state: SessionState, action: SessionAction): SessionStat
             const newBigTosses = [...updatedSession.bigTosses];
             newBigTosses[scheduledIndex] = regenerated;
             updatedSession = { ...updatedSession, bigTosses: newBigTosses, players: adj.players };
-          } catch (e) {
+          } catch {
             // If adjustment fails, remove the scheduled Big Toss as it is no longer valid
             const newBigTosses = updatedSession.bigTosses.filter((_, idx) => idx !== scheduledIndex);
             updatedSession = { ...updatedSession, bigTosses: newBigTosses };
@@ -250,6 +252,26 @@ const sessionReducer = (state: SessionState, action: SessionAction): SessionStat
       return { ...state, session: updatedSession, error: null };
     }
 
+    case 'UPDATE_GAME_TEAMS': {
+      if (!state.session) return state;
+      const { gameId, teams } = action.payload;
+      
+      const updatedSession = {
+        ...state.session,
+        bigTosses: state.session.bigTosses.map(bigToss => ({
+          ...bigToss,
+          games: bigToss.games.map(game => 
+            game.id === gameId 
+              ? { ...game, teams, overrides: true }
+              : game
+          ),
+        })),
+      };
+      
+      saveSession(updatedSession);
+      return { ...state, session: updatedSession, error: null };
+    }
+
     case 'SET_ERROR':
       return { ...state, error: action.payload };
 
@@ -299,6 +321,8 @@ export const SessionProvider: React.FC<{ children: ReactNode }> = ({ children })
       dispatch({ type: 'TOGGLE_PLAYER_AVAILABILITY', payload: playerId }),
     generateBigToss: () => dispatch({ type: 'GENERATE_BIG_TOSS' }),
     deleteBigToss: (bigTossId: string) => dispatch({ type: 'DELETE_BIG_TOSS', payload: bigTossId }),
+    updateGameTeams: (gameId: string, teams: { teamA: TeamSlot[]; teamB: TeamSlot[] }) =>
+      dispatch({ type: 'UPDATE_GAME_TEAMS', payload: { gameId, teams } }),
     acknowledgeVersionMismatch: () => {
       clearSession();
       dispatch({ type: 'HIDE_VERSION_MODAL' });
