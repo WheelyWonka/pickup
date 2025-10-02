@@ -62,3 +62,11 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+        
+      - name: Purge Cloudflare Cache
+        if: github.ref == 'refs/heads/main'
+        uses: cloudflare/purge-action@v1
+        with:
+          api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          zone_id: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+          purge_everything: true
