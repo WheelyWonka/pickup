@@ -9,10 +9,59 @@ import SessionSummary from './components/Session/SessionSummary';
 import SessionDashboard from './components/Session/SessionDashboard';
 import StorageVersionModal from './components/common/StorageVersionModal';
 import AppFooter from './components/common/AppFooter';
+import Navigation from './components/common/Navigation';
+import HowToUseView from './components/HowToUse/HowToUseView';
 import { useSession } from './store/SessionContext';
+import { useState } from 'react';
+
+type ViewType = 'dashboard' | 'how-to-use';
 
 function Shell() {
   const { state, acknowledgeVersionMismatch } = useSession();
+  const [currentView, setCurrentView] = useState<ViewType>('dashboard');
+
+  const renderContent = () => {
+    switch (currentView) {
+      case 'dashboard':
+        return (
+          <>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 mb-6 sm:mb-8">
+              <div>
+                <h2 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
+                  Session Dashboard
+                </h2>
+                <p className="text-gray-600 mt-1 text-sm sm:text-base">Manage your pickup games and players</p>
+              </div>
+              <div className="flex-shrink-0">
+                <SessionToolbar />
+              </div>
+            </div>
+
+            <div className="space-y-4 sm:space-y-6 md:space-y-8">
+              <SessionSummary />
+              <SessionDashboard />
+            </div>
+          </>
+        );
+      case 'how-to-use':
+        return (
+          <>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 mb-6 sm:mb-8">
+              <div>
+                <h2 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
+                  How to Use Pickup!
+                </h2>
+                <p className="text-gray-600 mt-1 text-sm sm:text-base">Learn how to create fair game rotations and manage your sessions</p>
+              </div>
+            </div>
+
+            <HowToUseView />
+          </>
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
     <div className="min-h-screen text-gray-800">
@@ -35,23 +84,9 @@ function Shell() {
       </header>
 
       <main className="mx-auto px-1 md:max-w-4xl">
+        <Navigation currentView={currentView} onViewChange={setCurrentView} />
         <div className="bg-white/90 backdrop-blur-sm text-gray-800 rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 shadow-lg border border-orange-200/30">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 mb-6 sm:mb-8">
-            <div>
-              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
-                Session Dashboard
-              </h2>
-              <p className="text-gray-600 mt-1 text-sm sm:text-base">Manage your pickup games and players</p>
-            </div>
-            <div className="flex-shrink-0">
-              <SessionToolbar />
-            </div>
-          </div>
-
-          <div className="space-y-4 sm:space-y-6 md:space-y-8">
-            <SessionSummary />
-            <SessionDashboard />
-          </div>
+          {renderContent()}
         </div>
       </main>
 
