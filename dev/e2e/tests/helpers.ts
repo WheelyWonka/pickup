@@ -39,7 +39,13 @@ export async function generateBigToss(page: Page): Promise<void> {
 }
 
 export async function goToTab(page: Page, tabLabel: 'Players' | 'Schedule' | 'Stats'): Promise<void> {
-  await page.getByRole('button', { name: tabLabel }).click();
+  if (tabLabel === 'Stats') {
+    // Stats button doesn't have a count, just "Stats"
+    await page.getByRole('button', { name: 'Stats' }).click();
+  } else {
+    // Players and Schedule buttons include counts (e.g., "Players 6", "Schedule 1")
+    await page.getByRole('button', { name: new RegExp(`^${tabLabel} \\d+$`) }).click();
+  }
 }
 
 export function getGameCardByNumber(page: Page, gameNumber: number): Locator {
@@ -67,23 +73,21 @@ function escapeRegExp(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-function playerNameSpan(page: Page, name: string): Locator {
-  return page.locator('span.font-semibold.text-gray-900', { hasText: new RegExp(`^${escapeRegExp(name)}$`) }).first();
-}
-
 export async function removePlayerByName(page: Page, playerName: string): Promise<void> {
-  const nameSpan = playerNameSpan(page, playerName);
-  const row = nameSpan.locator('xpath=ancestor::div[contains(@class, "px-4") and contains(@class, "py-3")][1]');
-  page.once('dialog', async (dialog) => {
-    await dialog.accept();
-  });
-  await row.getByTitle('Remove player').click();
+  // Find the player name text and get its parent container
+  const playerNameElement = page.getByText(new RegExp(`^${escapeRegExp(playerName)}$`));
+  const playerRow = playerNameElement.locator('xpath=ancestor::div[contains(@class, "px-4") and contains(@class, "py-3")][1]');
+  
+  // Just click the remove button - dialog handling should be done by the test
+  await playerRow.getByTitle('Remove player').click();
 }
 
 export async function toggleAvailabilityByName(page: Page, playerName: string): Promise<void> {
-  const nameSpan = playerNameSpan(page, playerName);
-  const row = nameSpan.locator('xpath=ancestor::div[contains(@class, "px-4") and contains(@class, "py-3")][1]');
-  await row.locator('button[title^="Mark"]').first().click();
+  // Find the player name text and get its parent container
+  const playerNameElement = page.getByText(new RegExp(`^${escapeRegExp(playerName)}$`));
+  const playerRow = playerNameElement.locator('xpath=ancestor::div[contains(@class, "px-4") and contains(@class, "py-3")][1]');
+  
+  await playerRow.getByRole('button', { name: /Mark as/ }).click();
 }
 
 export async function countTotalGames(page: Page): Promise<number> {
@@ -94,4 +98,21 @@ export async function countTotalReservedAndBonus(page: Page): Promise<{ reserved
   const reserved = await page.getByText('reserved', { exact: true }).count();
   const bonus = await page.getByText('bonus', { exact: true }).count();
   return { reserved, bonus };
+}
+
+export function letters(count: number, startChar = 'A'): string[] {
+  const startCode = startChar.charCodeAt(0);
+  const names: string[] = [];
+  for (let i = 0; i < count; i++) {
+    if (i < 26) {
+      // A-Z
+      names.push(String.fromCharCode(startCode + i));
+    } else {
+      // AA, AB, AC, etc.
+      const firstChar = String.fromCharCode(startCode + Math.floor(i / 26) - 1);
+      const secondChar = String.fromCharCode(startCode + (i % 26));
+      names.push(firstChar + secondChar);
+    }
+  }
+  return names;
 }
