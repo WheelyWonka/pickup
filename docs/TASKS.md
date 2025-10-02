@@ -683,6 +683,254 @@ Feature: US-007 View and track fairness statistics
 
 ---
 
+### US-008: Guide new users after Session creation
+As a new user, I want visual guidance when a Session is created so I know what to do next.
+
+- Acceptance Criteria
+  - GIVEN a new Session has just been created
+    - WHEN the Session is successfully created and displayed
+    - THEN the "Add Player" input field blinks/animates to draw attention
+    - AND a bouncing down arrow appears at the bottom of the screen
+    - AND a notification toast appears explaining "Session created! Add players to get started"
+    - AND the notification auto-dismisses after 4 seconds
+  - GIVEN the user has scrolled down or interacted with the page
+    - WHEN the user has scrolled past the add player section
+    - THEN the bouncing arrow disappears
+  - GIVEN the user has added their first player
+    - WHEN a player is successfully added to the session
+    - THEN the blinking animation on the input field stops
+    - AND the bouncing arrow disappears
+- Implementation Notes
+  - Use CSS animations for blinking effect (opacity or border-color animation)
+  - Use CSS keyframes for bouncing arrow animation
+  - Toast notification should be non-intrusive and accessible
+  - Track scroll position to hide arrow when user has scrolled down
+  - Ensure animations are smooth and not overwhelming
+- **Implementation Details**:
+  - **Visual feedback**: CSS animations for input field blinking (2-second cycle)
+  - **Scroll indicator**: Bouncing down arrow with CSS keyframe animation
+  - **Toast notification**: Non-intrusive notification with auto-dismiss
+  - **State management**: Track session creation state and user interaction
+  - **Accessibility**: Ensure animations respect prefers-reduced-motion
+  - **Mobile optimization**: Touch-friendly animations and proper sizing
+
+#### Gherkin scenarios for US-008
+
+```gherkin
+Feature: US-008 Guide new users after Session creation
+  As a new user
+  I want visual guidance when a Session is created
+  So that I know what to do next
+
+  Scenario: Visual guidance appears when Session is created
+    Given there is no active Session
+    When I click "New Session" and confirm
+    Then the "Add Player" input field starts blinking
+    And a bouncing down arrow appears at the bottom of the screen
+    And a notification appears saying "Session created! Add players to get started"
+
+  Scenario: Notification auto-dismisses after timeout
+    Given a new Session has been created and the notification is visible
+    When 4 seconds pass
+    Then the notification disappears automatically
+
+  Scenario: Bouncing arrow disappears when user scrolls down
+    Given a new Session has been created and the bouncing arrow is visible
+    When I scroll down past the add player section
+    Then the bouncing arrow disappears
+
+  Scenario: Visual guidance stops when first player is added
+    Given a new Session has been created with blinking input and bouncing arrow
+    When I add a player named "Alex"
+    Then the input field stops blinking
+    And the bouncing arrow disappears
+    And the notification is dismissed
+
+  Scenario: Respects user's motion preferences
+    Given the user has prefers-reduced-motion enabled
+    When I create a new Session
+    Then the blinking and bouncing animations are disabled
+    And alternative visual cues are provided (e.g., static highlighting)
+
+  Scenario: Mobile-friendly animations
+    Given I am on a mobile device
+    When I create a new Session
+    Then the animations are appropriately sized for touch interaction
+    And the bouncing arrow is positioned for mobile viewport
+```
+
+---
+
+### US-009: Guide users when 6 players are added
+As a user, I want visual guidance when 6 players have been added so I know I can generate a Big Toss.
+
+- Acceptance Criteria
+  - GIVEN exactly 6 players have been added to the Session
+    - WHEN the 6th player is successfully added
+    - THEN the "Generate Big Toss" button starts blinking/animating to draw attention
+    - AND a bouncing up arrow appears at the top of the viewport
+    - AND a notification toast appears explaining "6 players added! You can now generate a Big Toss"
+    - AND the notification auto-dismisses after 4 seconds
+  - GIVEN the user has scrolled to the top or interacted with the toolbar
+    - WHEN the user has scrolled to the top section containing the "Generate Big Toss" button
+    - THEN the bouncing up arrow disappears
+  - GIVEN the user has generated a Big Toss or added/removed players
+    - WHEN a Big Toss is generated OR the player count changes from 6
+    - THEN the blinking animation on the button stops
+    - AND the bouncing arrow disappears
+    - AND any remaining notification is dismissed
+- Implementation Notes
+  - Use CSS animations for blinking effect on the "Generate Big Toss" button
+  - Use CSS keyframes for bouncing up arrow animation at top of viewport
+  - Toast notification should be non-intrusive and accessible
+  - Track scroll position to hide arrow when user has scrolled to top
+  - Monitor player count changes to stop animations appropriately
+  - Ensure animations are smooth and not overwhelming
+- **Implementation Details**:
+  - **Visual feedback**: CSS animations for "Generate Big Toss" button blinking (2-second cycle)
+  - **Scroll indicator**: Bouncing up arrow with CSS keyframe animation at top of viewport
+  - **Toast notification**: Non-intrusive notification with auto-dismiss
+  - **State management**: Track player count and Big Toss generation state
+  - **Accessibility**: Ensure animations respect prefers-reduced-motion
+  - **Mobile optimization**: Touch-friendly animations and proper positioning
+
+#### Gherkin scenarios for US-009
+
+```gherkin
+Feature: US-009 Guide users when 6 players are added
+  As a user
+  I want visual guidance when 6 players have been added
+  So that I know I can generate a Big Toss
+
+  Scenario: Visual guidance appears when 6th player is added
+    Given there are exactly 5 players in the Session
+    When I add a 6th player named "Frank"
+    Then the "Generate Big Toss" button starts blinking
+    And a bouncing up arrow appears at the top of the viewport
+    And a notification appears saying "6 players added! You can now generate a Big Toss"
+
+  Scenario: Notification auto-dismisses after timeout
+    Given exactly 6 players have been added and the notification is visible
+    When 4 seconds pass
+    Then the notification disappears automatically
+
+  Scenario: Bouncing arrow disappears when user scrolls to top
+    Given exactly 6 players have been added and the bouncing up arrow is visible
+    When I scroll to the top section containing the "Generate Big Toss" button
+    Then the bouncing up arrow disappears
+
+  Scenario: Visual guidance stops when Big Toss is generated
+    Given exactly 6 players have been added with blinking button and bouncing arrow
+    When I click "Generate Big Toss"
+    Then the button stops blinking
+    And the bouncing arrow disappears
+    And the notification is dismissed
+
+  Scenario: Visual guidance stops when player count changes
+    Given exactly 6 players have been added with blinking button and bouncing arrow
+    When I remove a player (making it 5 players)
+    Then the button stops blinking
+    And the bouncing arrow disappears
+    And the notification is dismissed
+
+  Scenario: Respects user's motion preferences
+    Given the user has prefers-reduced-motion enabled
+    When I add the 6th player
+    Then the blinking and bouncing animations are disabled
+    And alternative visual cues are provided (e.g., static highlighting)
+
+  Scenario: Mobile-friendly animations
+    Given I am on a mobile device
+    When I add the 6th player
+    Then the animations are appropriately sized for touch interaction
+    And the bouncing up arrow is positioned for mobile viewport
+```
+
+---
+
+### US-010: Guide users after Big Toss generation
+As a user, I want visual guidance when a Big Toss is generated so I know where to view the created games.
+
+- Acceptance Criteria
+  - GIVEN a Big Toss has been successfully generated
+    - WHEN the "Generate Big Toss" button is clicked and games are created
+    - THEN the "Schedule" tab button starts blinking/animating to draw attention
+    - AND a notification toast appears explaining "Big Toss generated! View the Schedule tab to see the created games"
+    - AND the notification auto-dismisses after 4 seconds
+  - GIVEN the user has clicked on the Schedule tab or interacted with the schedule
+    - WHEN the user clicks on the "Schedule" tab
+    - THEN the blinking animation on the tab stops
+    - AND the notification is dismissed
+  - GIVEN the user has generated a new Big Toss or cleared the current one
+    - WHEN a new Big Toss is generated OR the current Big Toss is deleted
+    - THEN any existing blinking animation stops
+    - AND any remaining notification is dismissed
+- Implementation Notes
+  - Use CSS animations for blinking effect on the "Schedule" tab button
+  - Toast notification should be non-intrusive and accessible
+  - Monitor Big Toss state changes to stop animations appropriately
+  - Ensure animations are smooth and not overwhelming
+  - Consider tab switching behavior and state management
+- **Implementation Details**:
+  - **Visual feedback**: CSS animations for "Schedule" tab button blinking (2-second cycle)
+  - **Toast notification**: Non-intrusive notification with auto-dismiss
+  - **State management**: Track Big Toss generation and tab interaction state
+  - **Accessibility**: Ensure animations respect prefers-reduced-motion
+  - **Mobile optimization**: Touch-friendly animations and proper tab styling
+  - **Tab integration**: Work with existing tab switching functionality
+
+#### Gherkin scenarios for US-010
+
+```gherkin
+Feature: US-010 Guide users after Big Toss generation
+  As a user
+  I want visual guidance when a Big Toss is generated
+  So that I know where to view the created games
+
+  Scenario: Visual guidance appears when Big Toss is generated
+    Given there are exactly 6 players in the Session
+    When I click "Generate Big Toss"
+    Then the "Schedule" tab button starts blinking
+    And a notification appears saying "Big Toss generated! View the Schedule tab to see the created games"
+
+  Scenario: Notification auto-dismisses after timeout
+    Given a Big Toss has been generated and the notification is visible
+    When 4 seconds pass
+    Then the notification disappears automatically
+
+  Scenario: Visual guidance stops when Schedule tab is clicked
+    Given a Big Toss has been generated with blinking Schedule tab
+    When I click on the "Schedule" tab
+    Then the tab stops blinking
+    And the notification is dismissed
+
+  Scenario: Visual guidance stops when new Big Toss is generated
+    Given a Big Toss has been generated with blinking Schedule tab
+    When I generate a new Big Toss (replacing the current one)
+    Then the blinking animation stops
+    And the notification is dismissed
+
+  Scenario: Visual guidance stops when Big Toss is deleted
+    Given a Big Toss has been generated with blinking Schedule tab
+    When I delete the current Big Toss
+    Then the blinking animation stops
+    And the notification is dismissed
+
+  Scenario: Respects user's motion preferences
+    Given the user has prefers-reduced-motion enabled
+    When I generate a Big Toss
+    Then the blinking animation is disabled
+    And alternative visual cues are provided (e.g., static highlighting)
+
+  Scenario: Mobile-friendly animations
+    Given I am on a mobile device
+    When I generate a Big Toss
+    Then the animations are appropriately sized for touch interaction
+    And the tab styling is optimized for mobile viewport
+```
+
+---
+
 ## Core Algorithms (COA implementation details)
 
 - Team Rotation Generator
