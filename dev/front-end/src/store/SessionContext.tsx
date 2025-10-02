@@ -108,7 +108,10 @@ const sessionReducer = (state: SessionState, action: SessionAction): SessionStat
           const existing = updatedSession.bigTosses[scheduledIndex];
           try {
             const adj = addPlayerToBigToss(existing, updatedSession.players, newPlayer.id);
-            const gamesWithRefs = assignRefsToGames(adj.bigToss.games, adj.players);
+            // Use all prior games across session for fairness counts
+            const historyGames = updatedSession.bigTosses
+              .flatMap((bt, idx) => (idx === scheduledIndex ? [] : bt.games));
+            const gamesWithRefs = assignRefsToGames(adj.bigToss.games, adj.players, historyGames);
             const regenerated = { ...adj.bigToss, games: gamesWithRefs };
             const newBigTosses = [...updatedSession.bigTosses];
             newBigTosses[scheduledIndex] = regenerated;
@@ -149,7 +152,10 @@ const sessionReducer = (state: SessionState, action: SessionAction): SessionStat
           const existing = updatedSession.bigTosses[scheduledIndex];
           try {
             const adj = removePlayerFromBigToss(existing, updatedSession.players, action.payload);
-            const gamesWithRefs = assignRefsToGames(adj.bigToss.games, adj.players);
+            // Use all prior games across session for fairness counts
+            const historyGames = updatedSession.bigTosses
+              .flatMap((bt, idx) => (idx === scheduledIndex ? [] : bt.games));
+            const gamesWithRefs = assignRefsToGames(adj.bigToss.games, adj.players, historyGames);
             const regenerated = { ...adj.bigToss, games: gamesWithRefs };
             const newBigTosses = [...updatedSession.bigTosses];
             newBigTosses[scheduledIndex] = regenerated;
@@ -203,8 +209,9 @@ const sessionReducer = (state: SessionState, action: SessionAction): SessionStat
           startIndex: 0,
         });
 
-        // Assign refs to all games
-        const gamesWithRefs = assignRefsToGames(result.games, result.updatedPlayers);
+        // Assign refs to all games using session history up to now
+        const historyGames = state.session.bigTosses.flatMap(bt => bt.games);
+        const gamesWithRefs = assignRefsToGames(result.games, result.updatedPlayers, historyGames);
 
         const newBigToss: BigToss = {
           id: bigTossId,

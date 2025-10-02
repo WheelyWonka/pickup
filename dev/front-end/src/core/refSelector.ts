@@ -24,9 +24,9 @@ function sortCandidates(candidates: RefCandidate[]): RefCandidate[] {
   return candidates.sort((a, b) => {
     // 1) lowest assignedTotal
     if (a.assignedTotal !== b.assignedTotal) return a.assignedTotal - b.assignedTotal;
-    // 2) earliest lastRefedAt (null treated as 0)
-    const aLast = a.player.sessionStats.lastRefedAt ?? 0;
-    const bLast = b.player.sessionStats.lastRefedAt ?? 0;
+    // 2) earliest lastRefedAt (fallback to joinedAt when missing)
+    const aLast = a.player.sessionStats.lastRefedAt ?? a.player.joinedAt;
+    const bLast = b.player.sessionStats.lastRefedAt ?? b.player.joinedAt;
     if (aLast !== bLast) return aLast - bLast;
     // 3) name
     return a.player.name.localeCompare(b.player.name);
@@ -66,14 +66,46 @@ export function selectRefsForGame(
 export function assignRefsToGames(
   games: Game[],
   allPlayers: Player[],
+  historyGames?: Game[],
 ): Game[] {
-  // Use all provided games to compute assigned counts; this function is designed to be called
-  // after team updates so that assignments are consistent and valid
-  const allGamesForCounts = games;
-  return games.map(game => ({
-    ...game,
-    refs: selectRefsForGame(game, allPlayers, allGamesForCounts),
-  }));
+  // Start with session-wide history (scheduled + completed) when provided; otherwise only previously assigned within this set
+  const initialCounts = getAssignedRefCounts(historyGames ?? [], allPlayers);
+
+  const result: Game[] = [];
+  const counts = new Map(initialCounts);
+
+  for (const game of games) {
+    const playingPlayerIds = new Set([
+      ...game.teams.teamA.map(s => s.playerId),
+      ...game.teams.teamB.map(s => s.playerId),
+    ]);
+
+    const eligible = allPlayers.filter(p => !playingPlayerIds.has(p.id) && p.active && p.available);
+
+    const candidates: RefCandidate[] = eligible.map(p => ({
+      player: p,
+      assignedTotal: counts.get(p.id) ?? 0,
+    }));
+
+    const sorted = sortCandidates(candidates);
+
+    let mainId: string | null = null;
+    let assistantId: string | null = null;
+
+    if (sorted.length >= 1) {
+      mainId = sorted[0].player.id;
+      counts.set(mainId, (counts.get(mainId) ?? 0) + 1);
+    }
+    if (sorted.length >= 2) {
+      // ensure assistant not same as main
+      assistantId = sorted[1].player.id;
+      counts.set(assistantId, (counts.get(assistantId) ?? 0) + 1);
+    }
+
+    result.push({ ...game, refs: { mainId, assistantId } });
+  }
+
+  return result;
 }
 
 
