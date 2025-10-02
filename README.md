@@ -101,17 +101,6 @@ dev/front-end/
 └── dist/              # Build output
 ```
 
-## User Stories
-
-- **US-001**: Create a new Session ✅
-- **US-002**: View Session dashboard ✅
-- **US-003**: Manage players in Session ✅
-- **US-004**: Start a Big Toss ✅
-- **US-005**: Compose Games (team building) ✅
-- **US-006**: Assign refs per Game ✅
-- **US-007**: View and track fairness statistics ✅
-
-For full implementation details and acceptance criteria, see `docs/TASKS.md`.
 
 ## License
 
