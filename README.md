@@ -1,6 +1,6 @@
 # Pickup! - Game Scheduling & Referee Rotation Manager
 
-A React-based application for organizing and scheduling pickup basketball games with fair player rotation and referee assignment.
+A React-based application for organizing and scheduling pickup games with fair player rotation and referee assignment.
 
 ## What is Pickup!
 Pickup! helps organizers run fair, continuous pickup sessions. It builds balanced 3v3 games, rotates players so everyone gets a chance to play, and assigns two referees per game. The app adapts live as players join or leave, keeping things fair and minimizing disruption.
