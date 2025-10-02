@@ -1,0 +1,130 @@
+name: 🐛 Bug Report
+description: Report a bug or unexpected behavior in Pickup!
+title: "[Bug]: "
+labels: ["bug", "needs-triage"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! Please fill out the form below to help us understand and reproduce the issue.
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component affected
+      description: Which part of the application is affected?
+      options:
+        - Session Management
+        - Player Roster
+        - Big Toss Generation
+        - Game Composition
+        - Referee Assignment
+        - Statistics & Fairness
+        - UI/UX
+        - Persistence/Storage
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      description: How severe is this bug?
+      options:
+        - Critical (app crashes, data loss)
+        - High (major functionality broken)
+        - Medium (minor functionality affected)
+        - Low (cosmetic issue)
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of what the bug is.
+      placeholder: Describe what happened and what you expected to happen.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: Steps to reproduce the behavior
+      placeholder: |
+        1. Go to '...'
+        2. Click on '....'
+        3. Scroll down to '....'
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What you expected to happen
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happened
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Please provide your environment details
+      placeholder: |
+        - OS: [e.g. macOS, Windows, Linux]
+        - Browser: [e.g. Chrome, Firefox, Safari]
+        - Browser Version: [e.g. 22]
+        - Device: [e.g. Desktop, Mobile]
+        - Screen Size: [e.g. 1920x1080, 375x667]
+    validations:
+      required: true
+
+  - type: textarea
+    id: session-data
+    attributes:
+      label: Session Data (if applicable)
+      description: If the bug is related to game generation or player management, please describe your session setup
+      placeholder: |
+        - Number of players: [e.g. 8]
+        - Player names: [e.g. Alice, Bob, Charlie...]
+        - Big Toss status: [e.g. generated, in progress]
+        - Any specific player states: [e.g. unavailable players, etc.]
+      render: markdown
+
+  - type: textarea
+    id: console-errors
+    attributes:
+      label: Console Errors
+      description: Any JavaScript errors in the browser console (F12 → Console tab)
+      placeholder: Paste any error messages here
+      render: markdown
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Add any other context about the problem here
+      placeholder: Screenshots, videos, or any other relevant information
+      render: markdown
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow our Code of Conduct
+      options:
+        - label: I agree to follow this project's Code of Conduct
+          required: true

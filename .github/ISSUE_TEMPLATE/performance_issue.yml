@@ -1,0 +1,146 @@
+name: ⚡ Performance Issue
+description: Report performance problems or optimization opportunities
+title: "[Performance]: "
+labels: ["performance", "needs-triage"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a performance issue! Performance is crucial for Pickup! especially with larger player rosters.
+
+  - type: dropdown
+    id: performance-type
+    attributes:
+      label: Performance Issue Type
+      description: What type of performance problem are you experiencing?
+      options:
+        - Slow Big Toss Generation
+        - UI Lag/Freezing
+        - Slow Statistics Calculation
+        - Memory Issues
+        - Slow Page Load
+        - Slow Player Management
+        - Slow Ref Assignment
+        - General Slowness
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      description: How severe is the performance impact?
+      options:
+        - Critical (app unusable)
+        - High (significant impact on usability)
+        - Medium (noticeable but workable)
+        - Low (minor annoyance)
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Performance Issue Description
+      description: Describe the performance problem you're experiencing
+      placeholder: What is slow or causing issues? When does it happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: Steps to reproduce the performance issue
+      placeholder: |
+        1. Create a session with X players
+        2. Generate a Big Toss
+        3. Observe slow performance
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment Details
+      description: Your system and browser information
+      placeholder: |
+        - OS: [e.g. macOS 14.0, Windows 11]
+        - Browser: [e.g. Chrome 120, Firefox 121]
+        - Device: [e.g. MacBook Pro M2, Desktop PC]
+        - RAM: [e.g. 16GB, 8GB]
+        - CPU: [e.g. Apple M2, Intel i7-12700K]
+    validations:
+      required: true
+
+  - type: textarea
+    id: session-size
+    attributes:
+      label: Session Size
+      description: Details about your session that might affect performance
+      placeholder: |
+        - Number of players: [e.g. 24]
+        - Number of Big Tosses: [e.g. 3]
+        - Number of completed games: [e.g. 15]
+        - Any other relevant session details
+    validations:
+      required: true
+
+  - type: textarea
+    id: timing
+    attributes:
+      label: Timing Information
+      description: How long does the operation take?
+      placeholder: |
+        - Big Toss generation: [e.g. 5+ seconds]
+        - Statistics calculation: [e.g. 2+ seconds]
+        - UI response time: [e.g. 1+ second delay]
+        - Any other timing observations
+    validations:
+      required: true
+
+  - type: textarea
+    id: browser-tools
+    attributes:
+      label: Browser Developer Tools
+      description: Information from browser performance tools
+      placeholder: |
+        - Performance tab recordings
+        - Memory usage spikes
+        - Console warnings/errors
+        - Network tab issues
+        - Any profiling data
+      render: markdown
+
+  - type: textarea
+    id: expected-performance
+    attributes:
+      label: Expected Performance
+      description: What performance would you expect?
+      placeholder: Based on the project's non-functional requirements or your experience with similar apps.
+
+  - type: textarea
+    id: workarounds
+    attributes:
+      label: Workarounds
+      description: Any workarounds you've found or temporary solutions
+      placeholder: How do you currently deal with this performance issue?
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Any other relevant information
+      placeholder: Screenshots, videos, or other context that might help
+      render: markdown
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow our Code of Conduct
+      options:
+        - label: I agree to follow this project's Code of Conduct
+          required: true

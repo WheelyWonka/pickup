@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 🏀 Pickup! Documentation
+    url: https://github.com/williamthibault/pickup#readme
+    about: Read the README and project documentation
+  - name: 📋 User Stories & Tasks
+    url: https://github.com/williamthibault/pickup/blob/main/docs/TASKS.md
+    about: View detailed user stories and implementation details
+  - name: 🚀 Live Application
+    url: https://pickup.montrealbikepolo.ca
+    about: Try the live Pickup! application
+  - name: 💬 Discussions
+    url: https://github.com/williamthibault/pickup/discussions
+    about: Ask questions and discuss ideas with the community

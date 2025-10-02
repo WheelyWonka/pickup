@@ -1,0 +1,146 @@
+name: 📚 Documentation
+description: Request documentation improvements or report documentation issues
+title: "[Docs]: "
+labels: ["documentation", "needs-triage"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve Pickup!'s documentation! Good documentation helps everyone use the app effectively.
+
+  - type: dropdown
+    id: doc-type
+    attributes:
+      label: Documentation Type
+      description: What type of documentation issue or request is this?
+      options:
+        - User Guide/Instructions
+        - README Improvements
+        - Code Documentation
+        - API Documentation
+        - Troubleshooting Guide
+        - FAQ
+        - Video Tutorials
+        - Screenshots/Images
+        - Translation
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How important is this documentation improvement?
+      options:
+        - Critical (missing essential information)
+        - High (would significantly help users)
+        - Medium (nice to have)
+        - Low (minor improvement)
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Documentation Issue/Request
+      description: Describe the documentation problem or improvement needed
+      placeholder: What documentation is missing, unclear, or needs improvement?
+    validations:
+      required: true
+
+  - type: textarea
+    id: current-state
+    attributes:
+      label: Current Documentation
+      description: What documentation currently exists (if any)?
+      placeholder: |
+        - Link to current docs
+        - What's currently written
+        - What's missing or unclear
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-content
+    attributes:
+      label: Proposed Content
+      description: What should the documentation say or include?
+      placeholder: |
+        - Outline of new content
+        - Key points to cover
+        - Examples to include
+        - Screenshots or diagrams needed
+      render: markdown
+
+  - type: textarea
+    id: target-audience
+    attributes:
+      label: Target Audience
+      description: Who is this documentation for?
+      placeholder: |
+        - New users
+        - Experienced organizers
+        - Developers
+        - Contributors
+        - Specific user types
+    validations:
+      required: true
+
+  - type: textarea
+    id: use-cases
+    attributes:
+      label: Use Cases
+      description: What specific use cases should this documentation address?
+      placeholder: |
+        - Common scenarios
+        - Step-by-step workflows
+        - Problem-solving situations
+        - Best practices
+    validations:
+      required: true
+
+  - type: textarea
+    id: examples
+    attributes:
+      label: Examples Needed
+      description: What examples would help illustrate the concepts?
+      placeholder: |
+        - Sample sessions
+        - Screenshots
+        - Step-by-step walkthroughs
+        - Common mistakes to avoid
+      render: markdown
+
+  - type: textarea
+    id: related-docs
+    attributes:
+      label: Related Documentation
+      description: Links to related documentation or resources
+      placeholder: |
+        - Existing docs that should link to this
+        - External resources
+        - Similar documentation in other projects
+      render: markdown
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Any other relevant information
+      placeholder: |
+        - User feedback that prompted this
+        - Common questions you've seen
+        - Areas of confusion
+        - Any other context
+      render: markdown
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow our Code of Conduct
+      options:
+        - label: I agree to follow this project's Code of Conduct
+          required: true

@@ -1,0 +1,93 @@
+name: ❓ Question
+description: Ask a question about Pickup! usage, features, or development
+title: "[Question]: "
+labels: ["question", "needs-triage"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for your question! We're here to help you get the most out of Pickup!.
+
+  - type: dropdown
+    id: question-type
+    attributes:
+      label: Question Type
+      description: What type of question do you have?
+      options:
+        - How to use a feature
+        - Best practices
+        - Troubleshooting
+        - Feature clarification
+        - Development/Contributing
+        - Installation/Setup
+        - Performance optimization
+        - Fairness rules
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Your Question
+      description: What would you like to know?
+      placeholder: Please be as specific as possible about what you're trying to understand or accomplish.
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Provide context for your question
+      placeholder: |
+        - What are you trying to accomplish?
+        - What have you tried so far?
+        - What's your current setup?
+        - Any relevant session details
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-answer
+    attributes:
+      label: What kind of answer are you looking for?
+      description: Help us understand what would be most helpful
+      placeholder: |
+        - Step-by-step instructions
+        - Explanation of how something works
+        - Code example
+        - Link to documentation
+        - General guidance
+    validations:
+      required: true
+
+  - type: textarea
+    id: research
+    attributes:
+      label: Research Done
+      description: What have you already looked into?
+      placeholder: |
+        - Documentation you've checked
+        - Issues you've searched
+        - Things you've tried
+        - Other resources consulted
+      render: markdown
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Any other relevant information
+      placeholder: Screenshots, error messages, or other details that might help
+      render: markdown
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow our Code of Conduct
+      options:
+        - label: I agree to follow this project's Code of Conduct
+          required: true

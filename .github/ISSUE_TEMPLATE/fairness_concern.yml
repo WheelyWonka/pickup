@@ -1,0 +1,152 @@
+name: ⚖️ Fairness Concern
+description: Report issues with game fairness, player rotation, or referee assignment
+title: "[Fairness]: "
+labels: ["fairness", "needs-triage"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a fairness concern! Fairness is a core principle of Pickup! and we want to ensure all players get equal opportunities.
+
+  - type: dropdown
+    id: fairness-type
+    attributes:
+      label: Fairness Issue Type
+      description: What type of fairness concern are you reporting?
+      options:
+        - Unequal Playing Time
+        - Unfair Referee Assignment
+        - Unbalanced Team Composition
+        - Bonus Slot Distribution
+        - Reserved Slot Issues
+        - Player Rotation Problems
+        - Statistics Accuracy
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      description: How significant is this fairness issue?
+      options:
+        - Critical (major unfairness affecting multiple players)
+        - High (noticeable unfairness)
+        - Medium (minor fairness concern)
+        - Low (edge case or minor issue)
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Fairness Issue Description
+      description: Describe the fairness problem you've observed
+      placeholder: What specific unfairness are you seeing? Which players are affected?
+    validations:
+      required: true
+
+  - type: textarea
+    id: session-details
+    attributes:
+      label: Session Details
+      description: Provide details about your session setup
+      placeholder: |
+        - Number of players: [e.g. 12]
+        - Player names: [e.g. Alice, Bob, Charlie, David, Eve, Frank, Grace, Henry, Ivy, Jack, Kate, Leo]
+        - Session duration: [e.g. 2 hours, 3 Big Tosses]
+        - Any player availability changes during session
+    validations:
+      required: true
+
+  - type: textarea
+    id: specific-examples
+    attributes:
+      label: Specific Examples
+      description: Provide specific examples of the unfairness
+      placeholder: |
+        - Player X played 5 games while Player Y only played 2
+        - Player Z was assigned as ref 4 times while others only 1-2 times
+        - Team composition seemed unbalanced in Game 3
+        - Include specific game numbers, player names, and statistics
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected Fair Behavior
+      description: What would have been fair in this situation?
+      placeholder: Based on Pickup!'s fairness rules, what should have happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: statistics
+    attributes:
+      label: Relevant Statistics
+      description: Any relevant statistics from the Stats tab
+      placeholder: |
+        - Per-player session stats
+        - Big Toss summary
+        - Ref distribution
+        - Any other relevant metrics
+      render: markdown
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: How to Reproduce
+      description: Steps to reproduce this fairness issue
+      placeholder: |
+        1. Create session with X players
+        2. Generate Big Toss
+        3. Observe unfair distribution
+        4. Check statistics
+    validations:
+      required: true
+
+  - type: textarea
+    id: fairness-rules
+    attributes:
+      label: Fairness Rules Context
+      description: Which fairness rules do you think were violated?
+      placeholder: |
+        Reference the fairness rules from the README:
+        - Bonus slots: fewest session Bonus appearances, then fewest games in current Big Toss, then earliest lastPlayedAt, then name
+        - Ref selection: lowest total assigned refs, then earliest lastRefedAt, then name
+        - Reserved slots: one per player per Big Toss
+      render: markdown
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact
+      description: How does this affect the player experience?
+      placeholder: How does this unfairness impact the game session and player satisfaction?
+
+  - type: textarea
+    id: suggestions
+    attributes:
+      label: Suggestions
+      description: Any suggestions for improving fairness
+      placeholder: How do you think this could be made more fair?
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Any other relevant information
+      placeholder: Screenshots of statistics, session data, or other context
+      render: markdown
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow our Code of Conduct
+      options:
+        - label: I agree to follow this project's Code of Conduct
+          required: true

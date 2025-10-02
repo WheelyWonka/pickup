@@ -1,0 +1,128 @@
+name: ✨ Feature Request
+description: Suggest a new feature or enhancement for Pickup!
+title: "[Feature]: "
+labels: ["enhancement", "needs-triage"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a new feature! Please provide as much detail as possible to help us understand your request.
+
+  - type: dropdown
+    id: feature-area
+    attributes:
+      label: Feature Area
+      description: Which area of the application would this feature affect?
+      options:
+        - Session Management
+        - Player Roster & Management
+        - Big Toss Generation
+        - Game Composition & Teams
+        - Referee Assignment
+        - Statistics & Analytics
+        - UI/UX Improvements
+        - Performance
+        - Data Export/Import
+        - Mobile Experience
+        - Accessibility
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How important is this feature to you?
+      options:
+        - Critical (blocks current usage)
+        - High (would significantly improve experience)
+        - Medium (nice to have)
+        - Low (minor improvement)
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: What problem does this feature solve? What is the current limitation?
+      placeholder: Describe the current situation and what's missing or difficult to do.
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: Describe your ideal solution or feature
+      placeholder: How would you like this to work? What would the user experience be like?
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternative Solutions
+      description: Have you considered any alternative solutions or workarounds?
+      placeholder: Describe any other approaches you've thought about.
+
+  - type: textarea
+    id: user-story
+    attributes:
+      label: User Story
+      description: Describe this from a user's perspective
+      placeholder: |
+        As a [type of user]
+        I want [goal/desire]
+        So that [benefit/value]
+      render: markdown
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance Criteria
+      description: What would need to be true for this feature to be considered complete?
+      placeholder: |
+        - [ ] Criterion 1
+        - [ ] Criterion 2
+        - [ ] Criterion 3
+      render: markdown
+
+  - type: textarea
+    id: mockups
+    attributes:
+      label: Mockups/Examples
+      description: Any visual examples, mockups, or references to similar features in other apps
+      placeholder: Attach images, links to examples, or describe the visual design
+      render: markdown
+
+  - type: textarea
+    id: technical-considerations
+    attributes:
+      label: Technical Considerations
+      description: Any technical aspects or constraints to consider
+      placeholder: |
+        - Performance implications
+        - Data model changes needed
+        - Integration with existing features
+        - Browser compatibility requirements
+      render: markdown
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Any other context, research, or background information
+      placeholder: Links to related issues, research, user feedback, etc.
+      render: markdown
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow our Code of Conduct
+      options:
+        - label: I agree to follow this project's Code of Conduct
+          required: true
