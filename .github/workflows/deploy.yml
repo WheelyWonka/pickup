@@ -65,8 +65,8 @@ jobs:
         
       - name: Purge Cloudflare Cache
         if: github.ref == 'refs/heads/main'
-        uses: cloudflare/purge-action@v1
-        with:
-          api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          zone_id: ${{ secrets.CLOUDFLARE_ZONE_ID }}
-          purge_everything: true
+        run: |
+          curl -X POST "https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE_ID }}/purge_cache" \
+            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            --data '{"purge_everything":true}'
